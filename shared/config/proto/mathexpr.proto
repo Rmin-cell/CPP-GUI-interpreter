@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package mathexpression; 
+
+service MathExpression {
+    rpc sendRequest (ExprRequest) returns (ExprReply) {}
+}
+
+message ExprRequest {
+    string expression = 1;
+}
+
+message ExprReply {
+    uint32 time_to_compile = 1;
+}
