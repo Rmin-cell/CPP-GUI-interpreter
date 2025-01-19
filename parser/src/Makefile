@@ -21,7 +21,7 @@ all: $(TARGET)
 
 .PHONY: example
 example: example.o tinyexpr.o
-	$(CC) $(CCFLAGS) -o $@.a $^ $(LFLAGS)
+	$(CC) $(CCFLAGS) -g -o $@.out $^ $(LFLAGS)
 #                       || ||
 #                       || ||-> special variable that represents the all dependencies (example.o tinyexpr.o)
 #                       ||-> special variable that represents the target (example)
