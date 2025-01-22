@@ -5,22 +5,27 @@ GRPC_VERSION=1.35.0
 
 printf "Detected $DISTRO\nTrying to install necessary packages...\n"
 
-if [ "$DISTRO" == "manjaro" ]
-then
+if [ "$DISTRO" == "manjaro" ]; then
 	sudo pacman -Sy openssl cmake autoconf libtool pkg-config clang
-elif [ "$DISTRO" == "ubuntu" ]
-then
-	sudo apt-get update && sudo apt-get install -y cmake libssl-dev build-essential autoconf libtool pkg-config libc-ares-dev
-elif [ "$DISTRO" == "centos" ]
-then
+elif [ "$DISTRO" == "ubuntu" ]; then
+	sudo apt-get update && sudo apt-get install -y cmake libssl-dev build-essential autoconf libtool pkg-config libc-ares-dev libabsl-dev
+elif [ "$DISTRO" == "centos" ]; then
 	sudo yum -y install openssl cmake autoconf libtool pkg-config
 else
 	printf 'Unsupported Linux distro\n'
 	exit 0
 fi
 
-sudo rm -rf grpc 
-git clone --recurse-submodules -b v$GRPC_VERSION https://github.com/grpc/grpc
+if [ "$1" == "d" ]; then
+    sudo rm -rf grpc
+    git clone --recurse-submodules -b v$GRPC_VERSION https://github.com/grpc/grpc
+
+    if [ $? -ne 0 ]; then
+        echo "failed fo download"
+        exit 1
+    fi
+fi
+
 cd grpc/
 
 # Install absl
@@ -84,4 +89,4 @@ sudo cmake \
 sudo make -j4 install
 cd ../..
 
-sudo rm -rf grpc
+# sudo rm -rf grpc
