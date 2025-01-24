@@ -6,124 +6,114 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QMessageBox>
-#include <QPainter>
-#include <QWidget>
-#include <cmath>
+#include <QScrollArea>
+#include <QTextEdit>
+#include <QDialog>
+#include <QSpacerItem>
+#include <QIcon>
 
-class PlotWidget : public QWidget {
+// Parse Tree Window
+class ParseTreeWindow : public QDialog {
     Q_OBJECT
 
 public:
-    explicit PlotWidget(QWidget *parent = nullptr) : QWidget(parent) {
-        setMinimumSize(400, 300);
+    explicit ParseTreeWindow(QWidget *parent = nullptr) : QDialog(parent) {
+        setWindowTitle("Parse Tree");
+        setWindowIcon(QIcon(":/icons/tree.png")); // Add an icon
+        resize(500, 400);
+
+        QVBoxLayout *layout = new QVBoxLayout(this);
+        parseTreeDisplay = new QTextEdit(this);
+        parseTreeDisplay->setReadOnly(true);
+        parseTreeDisplay->setStyleSheet("QTextEdit { background-color: #f0f0f0; border: 1px solid #ccc; padding: 10px; }");
+        layout->addWidget(parseTreeDisplay);
     }
 
-    void setEquation(const QString &equation, double xMin, double xMax) {
-        this->equation = equation;
-        this->xMin = xMin;
-        this->xMax = xMax;
-        update(); // Trigger repaint
-    }
-
-protected:
-    void paintEvent(QPaintEvent *event) override {
-        if (equation.isEmpty())
-            return;
-
-        QPainter painter(this);
-        painter.setRenderHint(QPainter::Antialiasing);
-        painter.fillRect(rect(), Qt::white);
-
-        // Draw axes
-        painter.setPen(Qt::black);
-        int centerX = width() / 2;
-        int centerY = height() / 2;
-        painter.drawLine(0, centerY, width(), centerY); // X-axis
-        painter.drawLine(centerX, 0, centerX, height()); // Y-axis
-
-        // Plot equation
-        painter.setPen(Qt::blue);
-        QPolygonF points;
-
-        double step = (xMax - xMin) / 100.0;
-        for (double x = xMin; x <= xMax; x += step) {
-            double y = evaluateEquation(x);
-            points << QPointF(centerX + x * 20, centerY - y * 20);
-        }
-
-        painter.drawPolyline(points);
+    void setParseTree(const QString &parseTree) {
+        parseTreeDisplay->setText(parseTree);
     }
 
 private:
-    QString equation;
-    double xMin = -10, xMax = 10;
+    QTextEdit *parseTreeDisplay;
+};
 
-    double evaluateEquation(double x) {
-        // For simplicity, handle only y = x^2 as an example.
-        // You can extend this with a proper math parser.
-        if (equation.trimmed() == "y=x^2") {
-            return x * x;
-        } else {
-            return 0; // Default if unsupported
-        }
+// Plot Window (Placeholder)
+class PlotWindow : public QDialog {
+    Q_OBJECT
+
+public:
+    explicit PlotWindow(QWidget *parent = nullptr) : QDialog(parent) {
+        setWindowTitle("Plot");
+        setWindowIcon(QIcon(":/icons/chart.png")); // Add an icon
+        resize(600, 400);
+
+        QVBoxLayout *layout = new QVBoxLayout(this);
+        QLabel *placeholderLabel = new QLabel("Plot will be displayed here.", this);
+        placeholderLabel->setAlignment(Qt::AlignCenter);
+        placeholderLabel->setStyleSheet("QLabel { font-size: 18px; color: #555; }");
+        layout->addWidget(placeholderLabel);
     }
 };
 
+// Main Window
 class EquationInterpreter : public QMainWindow {
     Q_OBJECT
 
 public:
     EquationInterpreter(QWidget *parent = nullptr) : QMainWindow(parent) {
-        // Set window title and size
+        // Set window title and icon
         setWindowTitle("Equation Interpreter");
-        resize(600, 500);
+        setWindowIcon(QIcon(":/icons/app.png")); // Add an icon
+        resize(800, 600);
 
-        // Create labels
-        QLabel *xLabel = new QLabel("X Min:", this);
-        QLabel *xMaxLabel = new QLabel("X Max:", this);
-        QLabel *equationLabel = new QLabel("Equation (e.g., y=x^2):", this);
+        // Apply a global stylesheet
+        setStyleSheet(
+            "QMainWindow { background-color: #f5f5f5; }"
+            "QPushButton { background-color: #4CAF50; color: white; border: none; padding: 10px; font-size: 14px; }"
+            "QPushButton:hover { background-color: #45a049; }"
+            "QLineEdit { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }"
+            "QLineEdit:invalid { border: 1px solid red; }"
+            "QLabel { font-size: 14px; color: #333; }"
+            "QScrollArea { border: none; }"
+        );
 
-        // Create input fields
-        xMinInput = new QLineEdit(this);
-        xMaxInput = new QLineEdit(this);
-        equationInput = new QLineEdit(this);
-
-        // Create buttons
-        QPushButton *plotButton = new QPushButton("Plot", this);
-        QPushButton *clearButton = new QPushButton("Clear", this);
-
-        // Connect buttons to actions
-        connect(plotButton, &QPushButton::clicked, this, &EquationInterpreter::onPlotClicked);
-        connect(clearButton, &QPushButton::clicked, this, &EquationInterpreter::onClearClicked);
-
-        // Create layout
+        // Create main layout
         QVBoxLayout *mainLayout = new QVBoxLayout();
-        QHBoxLayout *xLayout = new QHBoxLayout();
-        QHBoxLayout *xMaxLayout = new QHBoxLayout();
-        QHBoxLayout *equationLayout = new QHBoxLayout();
-        QHBoxLayout *buttonLayout = new QHBoxLayout();
 
-        // Add widgets to layouts
-        xLayout->addWidget(xLabel);
-        xLayout->addWidget(xMinInput);
+        // Create scroll area for dynamic variables
+        QScrollArea *scrollArea = new QScrollArea(this);
+        QWidget *scrollContent = new QWidget(scrollArea);
+        variableLayout = new QVBoxLayout(scrollContent);
+        scrollArea->setWidget(scrollContent);
+        scrollArea->setWidgetResizable(true);
+        mainLayout->addWidget(scrollArea);
 
-        xMaxLayout->addWidget(xMaxLabel);
-        xMaxLayout->addWidget(xMaxInput);
+        // Add variable button
+        QPushButton *addVariableButton = new QPushButton("Add Variable", this);
+        addVariableButton->setIcon(QIcon(":/icons/add.png")); // Add an icon
+        connect(addVariableButton, &QPushButton::clicked, this, &EquationInterpreter::onAddVariableClicked);
+        mainLayout->addWidget(addVariableButton);
 
-        equationLayout->addWidget(equationLabel);
-        equationLayout->addWidget(equationInput);
+        // Equation input
+        QLabel *equationLabel = new QLabel("Equation (e.g., y=x^2):", this);
+        equationInput = new QLineEdit(this);
+        mainLayout->addWidget(equationLabel);
+        mainLayout->addWidget(equationInput);
 
-        buttonLayout->addWidget(plotButton);
-        buttonLayout->addWidget(clearButton);
+        // Parse tree button
+        QPushButton *parseTreeButton = new QPushButton("Show Parse Tree", this);
+        parseTreeButton->setIcon(QIcon(":/icons/tree.png")); // Add an icon
+        connect(parseTreeButton, &QPushButton::clicked, this, &EquationInterpreter::onParseTreeClicked);
+        mainLayout->addWidget(parseTreeButton);
 
-        mainLayout->addLayout(xLayout);
-        mainLayout->addLayout(xMaxLayout);
-        mainLayout->addLayout(equationLayout);
-        mainLayout->addLayout(buttonLayout);
+        // Plot button
+        QPushButton *plotButton = new QPushButton("Show Plot", this);
+        plotButton->setIcon(QIcon(":/icons/chart.png")); // Add an icon
+        connect(plotButton, &QPushButton::clicked, this, &EquationInterpreter::onPlotClicked);
+        mainLayout->addWidget(plotButton);
 
-        // Add plot widget
-        plotWidget = new PlotWidget(this);
-        mainLayout->addWidget(plotWidget);
+        // Add a spacer to push everything up
+        mainLayout->addSpacerItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
         // Set central widget
         QWidget *centralWidget = new QWidget(this);
@@ -132,37 +122,154 @@ public:
     }
 
 private slots:
-    void onPlotClicked() {
-        bool xMinOk, xMaxOk;
-        double xMin = xMinInput->text().toDouble(&xMinOk);
-        double xMax = xMaxInput->text().toDouble(&xMaxOk);
-        QString equation = equationInput->text();
+    void onAddVariableClicked() {
+        QWidget *variableWidget = new QWidget(this);
+        QHBoxLayout *variableRowLayout = new QHBoxLayout(variableWidget);
 
-        if (!xMinOk || !xMaxOk || equation.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide valid X range and an equation.");
-            return;
-        }
+        QLineEdit *nameInput = new QLineEdit(variableWidget);
+        QLineEdit *minInput = new QLineEdit(variableWidget);
+        QLineEdit *maxInput = new QLineEdit(variableWidget);
+        QPushButton *clearButton = new QPushButton("Clear", variableWidget);
+        clearButton->setIcon(QIcon(":/icons/clear.png")); // Add an icon
+        clearButton->setStyleSheet("QPushButton { background-color: #f44336; } QPushButton:hover { background-color: #d32f2f; }");
 
-        if (xMin >= xMax) {
-            QMessageBox::warning(this, "Input Error", "X Min must be less than X Max.");
-            return;
-        }
+        // Set placeholders for min and max inputs
+        minInput->setPlaceholderText("Min");
+        maxInput->setPlaceholderText("Max");
 
-        plotWidget->setEquation(equation, xMin, xMax);
+        // Validate min and max inputs
+        auto validateInputs = [minInput, maxInput]() {
+            bool minValid = false, maxValid = false;
+            double minVal = minInput->text().toDouble(&minValid);
+            double maxVal = maxInput->text().toDouble(&maxValid);
+
+            if (minValid && maxValid && minVal < maxVal) {
+                minInput->setStyleSheet("");
+                maxInput->setStyleSheet("");
+            } else {
+                minInput->setStyleSheet("border: 1px solid red;");
+                maxInput->setStyleSheet("border: 1px solid red;");
+            }
+        };
+
+        connect(minInput, &QLineEdit::textChanged, validateInputs);
+        connect(maxInput, &QLineEdit::textChanged, validateInputs);
+
+        variableRowLayout->addWidget(new QLabel("Variable:", variableWidget));
+        variableRowLayout->addWidget(nameInput);
+        variableRowLayout->addWidget(new QLabel("Min:", variableWidget));
+        variableRowLayout->addWidget(minInput);
+        variableRowLayout->addWidget(new QLabel("Max:", variableWidget));
+        variableRowLayout->addWidget(maxInput);
+        variableRowLayout->addWidget(clearButton);
+
+        connect(clearButton, &QPushButton::clicked, [variableWidget]() {
+            delete variableWidget;
+        });
+
+        variableLayout->addWidget(variableWidget);
     }
 
-    void onClearClicked() {
-        xMinInput->clear();
-        xMaxInput->clear();
-        equationInput->clear();
-        plotWidget->setEquation("", 0, 0);
+    void onParseTreeClicked() {
+        // Validate inputs before proceeding
+        if (!validateInputs()) {
+            return;
+        }
+
+        // Collect variable data
+        QStringList variables;
+        for (int i = 0; i < variableLayout->count(); i++) {
+            QWidget *widget = variableLayout->itemAt(i)->widget();
+            if (!widget) continue;
+
+            QLineEdit *nameInput = widget->findChild<QLineEdit *>();
+            QLineEdit *minInput = widget->findChild<QLineEdit *>(QString(), Qt::FindDirectChildrenOnly);
+            QLineEdit *maxInput = widget->findChild<QLineEdit *>(QString(), Qt::FindDirectChildrenOnly);
+
+            if (!nameInput || !minInput || !maxInput) continue;
+
+            QString name = nameInput->text();
+            QString min = minInput->text();
+            QString max = maxInput->text();
+
+            variables << QString("%1: [%2, %3]").arg(name).arg(min).arg(max);
+        }
+
+        // Display equation
+        QString equation = equationInput->text();
+
+        // Open parse tree window
+        ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
+        parseTreeWindow->setParseTree("Variables:\n" + variables.join("\n") + "\n\nEquation: " + equation + "\n\nParse Tree: (Placeholder)");
+        parseTreeWindow->exec();
+    }
+
+    void onPlotClicked() {
+        // Validate inputs before proceeding
+        if (!validateInputs()) {
+            return;
+        }
+
+        // Open plot window
+        PlotWindow *plotWindow = new PlotWindow(this);
+        plotWindow->exec();
     }
 
 private:
-    QLineEdit *xMinInput;
-    QLineEdit *xMaxInput;
+    QVBoxLayout *variableLayout;
     QLineEdit *equationInput;
-    PlotWidget *plotWidget;
+
+    bool validateInputs() {
+        bool valid = true;
+
+        // Check if at least one variable is added
+        if (variableLayout->count() == 0) {
+            QMessageBox::warning(this, "Input Error", "Please add at least one variable.");
+            return false;
+        }
+
+        // Validate each variable
+        for (int i = 0; i < variableLayout->count(); i++) {
+            QWidget *widget = variableLayout->itemAt(i)->widget();
+            if (!widget) continue;
+
+            QLineEdit *nameInput = widget->findChild<QLineEdit *>();
+            QLineEdit *minInput = widget->findChild<QLineEdit *>(QString(), Qt::FindDirectChildrenOnly);
+            QLineEdit *maxInput = widget->findChild<QLineEdit *>(QString(), Qt::FindDirectChildrenOnly);
+
+            if (!nameInput || !minInput || !maxInput) continue;
+
+            QString name = nameInput->text();
+            QString min = minInput->text();
+            QString max = maxInput->text();
+
+            bool minValid = false, maxValid = false;
+            double minVal = min.toDouble(&minValid);
+            double maxVal = max.toDouble(&maxValid);
+
+            if (name.isEmpty() || !minValid || !maxValid || minVal >= maxVal) {
+                valid = false;
+                minInput->setStyleSheet("border: 1px solid red;");
+                maxInput->setStyleSheet("border: 1px solid red;");
+            } else {
+                minInput->setStyleSheet("");
+                maxInput->setStyleSheet("");
+            }
+        }
+
+        if (!valid) {
+            QMessageBox::warning(this, "Input Error", "Please provide valid min and max values for all variables.");
+            return false;
+        }
+
+        // Check if equation is provided
+        if (equationInput->text().isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide an equation.");
+            return false;
+        }
+
+        return true;
+    }
 };
 
 int main(int argc, char *argv[]) {

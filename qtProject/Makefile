@@ -1399,10 +1399,12 @@ main.moc: main.cpp \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
 		/opt/homebrew/opt/qt@6/include/QtWidgets/qdialog.h \
 		/opt/homebrew/opt/qt@6/include/QtWidgets/qdialogbuttonbox.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
-		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qwidget.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h \
+		/opt/homebrew/opt/qt@6/include/QtWidgets/qabstractscrollarea.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTextEdit \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qtextedit.h \
+		/opt/homebrew/opt/qt@6/include/QtCore/qtmochelpers.h \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/Armin/Desktop/PL-Project1/qtProject/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/Armin/Desktop/PL-Project1/qtProject -I/opt/homebrew/opt/qt@6/include -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/Library/Developer/CommandLineTools/usr/lib/clang/16/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/Library/Developer/CommandLineTools/usr/include -F/opt/homebrew/lib main.cpp -o main.moc
@@ -1635,11 +1637,13 @@ main.o: main.cpp /opt/homebrew/lib/QtWidgets.framework/Headers/QApplication \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/qmessagebox.h \
 		/opt/homebrew/opt/qt@6/include/QtWidgets/qdialog.h \
 		/opt/homebrew/opt/qt@6/include/QtWidgets/qdialogbuttonbox.h \
-		/opt/homebrew/lib/QtGui.framework/Headers/QPainter \
-		/opt/homebrew/lib/QtGui.framework/Headers/qpainter.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QWidget \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/qwidget.h \
-		main.moc
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qscrollarea.h \
+		/opt/homebrew/opt/qt@6/include/QtWidgets/qabstractscrollarea.h \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QTextEdit \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/qtextedit.h \
+		main.moc \
+		/opt/homebrew/opt/qt@6/include/QtCore/qtmochelpers.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o main.cpp
 
 ####### Install

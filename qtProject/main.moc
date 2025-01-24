@@ -32,16 +32,16 @@ QT_WARNING_DISABLE_GCC("-Wuseless-cast")
 namespace {
 
 #ifdef QT_MOC_HAS_STRINGDATA
-struct qt_meta_stringdata_CLASSPlotWidgetENDCLASS_t {};
-constexpr auto qt_meta_stringdata_CLASSPlotWidgetENDCLASS = QtMocHelpers::stringData(
-    "PlotWidget"
+struct qt_meta_stringdata_CLASSParseTreeWindowENDCLASS_t {};
+constexpr auto qt_meta_stringdata_CLASSParseTreeWindowENDCLASS = QtMocHelpers::stringData(
+    "ParseTreeWindow"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
 #endif // !QT_MOC_HAS_STRINGDATA
 } // unnamed namespace
 
-Q_CONSTINIT static const uint qt_meta_data_CLASSPlotWidgetENDCLASS[] = {
+Q_CONSTINIT static const uint qt_meta_data_CLASSParseTreeWindowENDCLASS[] = {
 
  // content:
       12,       // revision
@@ -57,20 +57,20 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSPlotWidgetENDCLASS[] = {
        0        // eod
 };
 
-Q_CONSTINIT const QMetaObject PlotWidget::staticMetaObject = { {
-    QMetaObject::SuperData::link<QWidget::staticMetaObject>(),
-    qt_meta_stringdata_CLASSPlotWidgetENDCLASS.offsetsAndSizes,
-    qt_meta_data_CLASSPlotWidgetENDCLASS,
+Q_CONSTINIT const QMetaObject ParseTreeWindow::staticMetaObject = { {
+    QMetaObject::SuperData::link<QDialog::staticMetaObject>(),
+    qt_meta_stringdata_CLASSParseTreeWindowENDCLASS.offsetsAndSizes,
+    qt_meta_data_CLASSParseTreeWindowENDCLASS,
     qt_static_metacall,
     nullptr,
-    qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSPlotWidgetENDCLASS_t,
+    qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSParseTreeWindowENDCLASS_t,
         // Q_OBJECT / Q_GADGET
-        QtPrivate::TypeAndForceComplete<PlotWidget, std::true_type>
+        QtPrivate::TypeAndForceComplete<ParseTreeWindow, std::true_type>
     >,
     nullptr
 } };
 
-void PlotWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+void ParseTreeWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
     (void)_o;
     (void)_id;
@@ -78,22 +78,89 @@ void PlotWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
     (void)_a;
 }
 
-const QMetaObject *PlotWidget::metaObject() const
+const QMetaObject *ParseTreeWindow::metaObject() const
 {
     return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
 }
 
-void *PlotWidget::qt_metacast(const char *_clname)
+void *ParseTreeWindow::qt_metacast(const char *_clname)
 {
     if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_meta_stringdata_CLASSPlotWidgetENDCLASS.stringdata0))
+    if (!strcmp(_clname, qt_meta_stringdata_CLASSParseTreeWindowENDCLASS.stringdata0))
         return static_cast<void*>(this);
-    return QWidget::qt_metacast(_clname);
+    return QDialog::qt_metacast(_clname);
 }
 
-int PlotWidget::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+int ParseTreeWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
-    _id = QWidget::qt_metacall(_c, _id, _a);
+    _id = QDialog::qt_metacall(_c, _id, _a);
+    return _id;
+}
+namespace {
+
+#ifdef QT_MOC_HAS_STRINGDATA
+struct qt_meta_stringdata_CLASSPlotWindowENDCLASS_t {};
+constexpr auto qt_meta_stringdata_CLASSPlotWindowENDCLASS = QtMocHelpers::stringData(
+    "PlotWindow"
+);
+#else  // !QT_MOC_HAS_STRINGDATA
+#error "qtmochelpers.h not found or too old."
+#endif // !QT_MOC_HAS_STRINGDATA
+} // unnamed namespace
+
+Q_CONSTINIT static const uint qt_meta_data_CLASSPlotWindowENDCLASS[] = {
+
+ // content:
+      12,       // revision
+       0,       // classname
+       0,    0, // classinfo
+       0,    0, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+       0,       // signalCount
+
+       0        // eod
+};
+
+Q_CONSTINIT const QMetaObject PlotWindow::staticMetaObject = { {
+    QMetaObject::SuperData::link<QDialog::staticMetaObject>(),
+    qt_meta_stringdata_CLASSPlotWindowENDCLASS.offsetsAndSizes,
+    qt_meta_data_CLASSPlotWindowENDCLASS,
+    qt_static_metacall,
+    nullptr,
+    qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSPlotWindowENDCLASS_t,
+        // Q_OBJECT / Q_GADGET
+        QtPrivate::TypeAndForceComplete<PlotWindow, std::true_type>
+    >,
+    nullptr
+} };
+
+void PlotWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+{
+    (void)_o;
+    (void)_id;
+    (void)_c;
+    (void)_a;
+}
+
+const QMetaObject *PlotWindow::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
+}
+
+void *PlotWindow::qt_metacast(const char *_clname)
+{
+    if (!_clname) return nullptr;
+    if (!strcmp(_clname, qt_meta_stringdata_CLASSPlotWindowENDCLASS.stringdata0))
+        return static_cast<void*>(this);
+    return QDialog::qt_metacast(_clname);
+}
+
+int PlotWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QDialog::qt_metacall(_c, _id, _a);
     return _id;
 }
 namespace {
@@ -102,9 +169,10 @@ namespace {
 struct qt_meta_stringdata_CLASSEquationInterpreterENDCLASS_t {};
 constexpr auto qt_meta_stringdata_CLASSEquationInterpreterENDCLASS = QtMocHelpers::stringData(
     "EquationInterpreter",
-    "onPlotClicked",
+    "onAddVariableClicked",
     "",
-    "onClearClicked"
+    "onParseTreeClicked",
+    "onPlotClicked"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -117,7 +185,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSEquationInterpreterENDCLASS[] = 
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-       2,   14, // methods
+       3,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -125,10 +193,12 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSEquationInterpreterENDCLASS[] = 
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,   26,    2, 0x08,    1 /* Private */,
-       3,    0,   27,    2, 0x08,    2 /* Private */,
+       1,    0,   32,    2, 0x08,    1 /* Private */,
+       3,    0,   33,    2, 0x08,    2 /* Private */,
+       4,    0,   34,    2, 0x08,    3 /* Private */,
 
  // slots: parameters
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
 
@@ -144,9 +214,11 @@ Q_CONSTINIT const QMetaObject EquationInterpreter::staticMetaObject = { {
     qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSEquationInterpreterENDCLASS_t,
         // Q_OBJECT / Q_GADGET
         QtPrivate::TypeAndForceComplete<EquationInterpreter, std::true_type>,
-        // method 'onPlotClicked'
+        // method 'onAddVariableClicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        // method 'onClearClicked'
+        // method 'onParseTreeClicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onPlotClicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
@@ -158,8 +230,9 @@ void EquationInterpreter::qt_static_metacall(QObject *_o, QMetaObject::Call _c, 
         auto *_t = static_cast<EquationInterpreter *>(_o);
         (void)_t;
         switch (_id) {
-        case 0: _t->onPlotClicked(); break;
-        case 1: _t->onClearClicked(); break;
+        case 0: _t->onAddVariableClicked(); break;
+        case 1: _t->onParseTreeClicked(); break;
+        case 2: _t->onPlotClicked(); break;
         default: ;
         }
     }
@@ -185,13 +258,13 @@ int EquationInterpreter::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 2)
+        if (_id < 3)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 2;
+        _id -= 3;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 2)
+        if (_id < 3)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 2;
+        _id -= 3;
     }
     return _id;
 }
