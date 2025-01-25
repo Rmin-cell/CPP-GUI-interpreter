@@ -23,6 +23,14 @@ public:
         resize(500, 400);
 
         QVBoxLayout *layout = new QVBoxLayout(this);
+
+        // Add a label for error messages
+        errorLabel = new QLabel(this);
+        errorLabel->setStyleSheet("QLabel { color: red; font-size: 14px; }");
+        errorLabel->setAlignment(Qt::AlignCenter);
+        layout->addWidget(errorLabel);
+
+        // Add the parse tree display
         parseTreeDisplay = new QTextEdit(this);
         parseTreeDisplay->setReadOnly(true);
         parseTreeDisplay->setStyleSheet("QTextEdit { background-color: #f0f0f0; border: 1px solid #ccc; padding: 10px; }");
@@ -31,10 +39,17 @@ public:
 
     void setParseTree(const QString &parseTree) {
         parseTreeDisplay->setText(parseTree);
+        errorLabel->clear(); // Clear any previous error messages
+    }
+
+    void setError(const QString &errorMessage) {
+        errorLabel->setText(errorMessage); // Display the error message
+        parseTreeDisplay->clear(); // Clear the parse tree display
     }
 
 private:
     QTextEdit *parseTreeDisplay;
+    QLabel *errorLabel; // Label to display errors
 };
 
 // Plot Window (Placeholder)
@@ -48,11 +63,26 @@ public:
         resize(600, 400);
 
         QVBoxLayout *layout = new QVBoxLayout(this);
+
+        // Add a label for error messages
+        errorLabel = new QLabel(this);
+        errorLabel->setStyleSheet("QLabel { color: red; font-size: 14px; }");
+        errorLabel->setAlignment(Qt::AlignCenter);
+        layout->addWidget(errorLabel);
+
+        // Add a placeholder for the plot
         QLabel *placeholderLabel = new QLabel("Plot will be displayed here.", this);
         placeholderLabel->setAlignment(Qt::AlignCenter);
         placeholderLabel->setStyleSheet("QLabel { font-size: 18px; color: #555; }");
         layout->addWidget(placeholderLabel);
     }
+
+    void setError(const QString &errorMessage) {
+        errorLabel->setText(errorMessage); // Display the error message
+    }
+
+private:
+    QLabel *errorLabel; // Label to display errors
 };
 
 // Main Window
@@ -171,8 +201,27 @@ private slots:
     }
 
     void onParseTreeClicked() {
+        // Check if no variables are added
+        if (variableLayout->count() == 0) {
+            ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
+            parseTreeWindow->setError("Error: Please add at least one variable before generating the parse tree.");
+            parseTreeWindow->exec();
+            return;
+        }
+
+        // Check if the equation is empty
+        if (equationInput->text().isEmpty()) {
+            ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
+            parseTreeWindow->setError("Error: Please enter an equation before generating the parse tree.");
+            parseTreeWindow->exec();
+            return;
+        }
+
         // Validate inputs before proceeding
         if (!validateInputs()) {
+            ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
+            parseTreeWindow->setError("Error: Invalid input values. Please check the min and max values for all variables.");
+            parseTreeWindow->exec();
             return;
         }
 
@@ -198,15 +247,37 @@ private slots:
         // Display equation
         QString equation = equationInput->text();
 
+        // Generate parse tree (simplified for now)
+        QString parseTree = generateParseTree(equation.toStdString());
+
         // Open parse tree window
         ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
-        parseTreeWindow->setParseTree("Variables:\n" + variables.join("\n") + "\n\nEquation: " + equation + "\n\nParse Tree: (Placeholder)");
+        parseTreeWindow->setParseTree("Variables:\n" + variables.join("\n") + "\n\nEquation: " + equation + "\n\nParse Tree:\n" + parseTree);
         parseTreeWindow->exec();
     }
 
     void onPlotClicked() {
+        // Check if no variables are added
+        if (variableLayout->count() == 0) {
+            PlotWindow *plotWindow = new PlotWindow(this);
+            plotWindow->setError("Error: Please add at least one variable before plotting.");
+            plotWindow->exec();
+            return;
+        }
+
+        // Check if the equation is empty
+        if (equationInput->text().isEmpty()) {
+            PlotWindow *plotWindow = new PlotWindow(this);
+            plotWindow->setError("Error: Please enter an equation before plotting.");
+            plotWindow->exec();
+            return;
+        }
+
         // Validate inputs before proceeding
         if (!validateInputs()) {
+            PlotWindow *plotWindow = new PlotWindow(this);
+            plotWindow->setError("Error: Invalid input values. Please check the min and max values for all variables.");
+            plotWindow->exec();
             return;
         }
 
@@ -221,12 +292,6 @@ private:
 
     bool validateInputs() {
         bool valid = true;
-
-        // Check if at least one variable is added
-        if (variableLayout->count() == 0) {
-            QMessageBox::warning(this, "Input Error", "Please add at least one variable.");
-            return false;
-        }
 
         // Validate each variable
         for (int i = 0; i < variableLayout->count(); i++) {
@@ -257,18 +322,28 @@ private:
             }
         }
 
-        if (!valid) {
-            QMessageBox::warning(this, "Input Error", "Please provide valid min and max values for all variables.");
-            return false;
-        }
+        return valid;
+    }
 
-        // Check if equation is provided
-        if (equationInput->text().isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide an equation.");
-            return false;
+    QString generateParseTree(const std::string &equation) {
+        // Simplified parse tree generation (replace with your parser)
+        if (equation == "y=x^2") {
+            return "Equation: y = x^2\n"
+                   "  Term: y\n"
+                   "  Operator: =\n"
+                   "  Term: x^2\n"
+                   "    Term: x\n"
+                   "    Operator: ^\n"
+                   "    Term: 2";
+        } else if (equation == "y=sin(x)") {
+            return "Equation: y = sin(x)\n"
+                   "  Term: y\n"
+                   "  Operator: =\n"
+                   "  Function: sin(x)\n"
+                   "    Term: x";
+        } else {
+            return "Unsupported equation";
         }
-
-        return true;
     }
 };
 
