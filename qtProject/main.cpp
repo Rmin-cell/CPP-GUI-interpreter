@@ -18,6 +18,7 @@
 #include <cmath>
 #include <set>
 #include <algorithm>
+#include "qcustomplot.h" // Include QCustomPlot header
 
 // Parse Tree Window
 class ParseTreeWindow : public QDialog {
@@ -67,7 +68,7 @@ public:
     explicit PlotWindow(QWidget *parent = nullptr) : QDialog(parent) {
         setWindowTitle("Plot");
         setWindowIcon(QIcon(":/icons/chart.png")); // Add an icon
-        resize(600, 400);
+        resize(800, 600);
 
         QVBoxLayout *layout = new QVBoxLayout(this);
 
@@ -77,21 +78,81 @@ public:
         errorLabel->setAlignment(Qt::AlignCenter);
         layout->addWidget(errorLabel);
 
-        // Add a placeholder for the plot
-        plotPlaceholder = new QLabel("Plot will be displayed here.", this);
-        plotPlaceholder->setAlignment(Qt::AlignCenter);
-        plotPlaceholder->setStyleSheet("QLabel { font-size: 18px; color: #555; }");
-        layout->addWidget(plotPlaceholder);
+        // Add QCustomPlot widget
+        plot = new QCustomPlot(this);
+        layout->addWidget(plot);
+
+        // Set up the plot
+        plot->xAxis->setLabel("x");
+        plot->yAxis->setLabel("y");
+        plot->xAxis->setRange(-10, 10); // Default x-axis range
+        plot->yAxis->setRange(-10, 10); // Default y-axis range
+        plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom); // Allow zooming and dragging
+    }
+
+    void plotEquation(const QString &equation, const std::map<std::string, std::pair<double, double>> &variables) {
+        try {
+            // Clear previous graph
+            plot->clearGraphs();
+
+            // Generate data points for the plot
+            QVector<double> x(1000), y(1000);
+            double minX = -10, maxX = 10; // Default x range
+            if (variables.find("x") != variables.end()) {
+                minX = variables.at("x").first;
+                maxX = variables.at("x").second;
+            }
+
+            for (int i = 0; i < 1000; ++i) {
+                x[i] = minX + (maxX - minX) * i / 999.0; // x values from minX to maxX
+                y[i] = evaluateEquation(equation.toStdString(), x[i]); // Evaluate y = f(x)
+            }
+
+            // Add graph and set data
+            plot->addGraph();
+            plot->graph(0)->setData(x, y);
+            plot->graph(0)->setPen(QPen(Qt::blue)); // Set line color
+            plot->graph(0)->setName(equation); // Set legend name
+
+            // Rescale axes and replot
+            plot->rescaleAxes();
+            plot->replot();
+
+            // Clear any previous error messages
+            errorLabel->clear();
+        } catch (const std::exception &e) {
+            errorLabel->setText("Error: " + QString::fromStdString(e.what()));
+        }
     }
 
     void setError(const QString &errorMessage) {
         errorLabel->setText(errorMessage); // Display the error message
-        plotPlaceholder->clear(); // Clear the plot placeholder
+        plot->clearGraphs(); // Clear the plot
     }
 
 private:
-    QLabel *plotPlaceholder;
+    QCustomPlot *plot;
     QLabel *errorLabel; // Label to display errors
+
+    // Evaluate the equation for a given x value
+    double evaluateEquation(const std::string &equation, double x) {
+        // Replace variables with their values
+        std::string expr = equation;
+        size_t pos = expr.find("x");
+        if (pos != std::string::npos) {
+            expr.replace(pos, 1, std::to_string(x));
+        }
+
+        // Evaluate the expression (this is a placeholder; replace with your parser)
+        // For now, we'll handle simple equations like y = x^2
+        if (expr.find("x^2") != std::string::npos) {
+            return x * x;
+        } else if (expr.find("sin(x)") != std::string::npos) {
+            return std::sin(x);
+        } else {
+            throw std::runtime_error("Unsupported equation");
+        }
+    }
 };
 
 // Main Window
@@ -251,8 +312,39 @@ private slots:
             return;
         }
 
-        // Open plot window
+        // Collect variable data
+        std::map<std::string, std::pair<double, double>> variables;
+        for (int i = 0; i < variableLayout->count(); i++) {
+            QWidget *widget = variableLayout->itemAt(i)->widget();
+            if (!widget) continue;
+
+            QLineEdit *nameInput = widget->findChild<QLineEdit *>();
+            QLineEdit *minInput = widget->findChild<QLineEdit *>(QString(), Qt::FindDirectChildrenOnly);
+            QLineEdit *maxInput = widget->findChild<QLineEdit *>(QString(), Qt::FindDirectChildrenOnly);
+
+            if (!nameInput || !minInput || !maxInput) continue;
+
+            QString name = nameInput->text();
+            QString min = minInput->text();
+            QString max = maxInput->text();
+
+            bool minValid = false, maxValid = false;
+            double minVal = min.toDouble(&minValid);
+            double maxVal = max.toDouble(&maxValid);
+
+            if (name.isEmpty() || !minValid || !maxValid || minVal >= maxVal) {
+                PlotWindow *plotWindow = new PlotWindow(this);
+                plotWindow->setError("Error: Invalid input values for variable " + name);
+                plotWindow->exec();
+                return;
+            }
+
+            variables[name.toStdString()] = {minVal, maxVal};
+        }
+
+        // Open plot window and plot the equation
         PlotWindow *plotWindow = new PlotWindow(this);
+        plotWindow->plotEquation(equationInput->text(), variables);
         plotWindow->exec();
     }
 

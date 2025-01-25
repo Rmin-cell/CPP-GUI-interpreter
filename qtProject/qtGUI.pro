@@ -1,10 +1,17 @@
-QT += core gui widgets
+QT += core gui widgets printsupport
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = MyQtProject
 TEMPLATE = app
 CONFIG += c++11
-SOURCES += main.cpp
+SOURCES += main.cpp qcustomplot.cpp
+HEADERS += \
+    qcustomplot.h
+
+# Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target
 
 #CONFIG += link_pkgconfig
 #PKGCONFIG += Qt6Core Qt6Gui Qt6Widgets
