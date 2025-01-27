@@ -2,14 +2,32 @@ syntax = "proto3";
 
 package mathexpression; 
 
+option go_package = "./proto";
+
 service MathExpression {
-    rpc sendRequest (ExprRequest) returns (ExprReply) {}
+    rpc getVariablesList (ExprRequest) returns (VariablesListReply) {}
+    rpc getDataPoints (DataPointsRequest) returns (DataPointsReply) {}
 }
 
 message ExprRequest {
     string expression = 1;
 }
 
-message ExprReply {
-    uint32 time_to_compile = 1;
+message VariablesListReply {
+    repeated string tokens = 1;
+}
+
+message VariableWithRange {
+    string variable_name = 1;
+    double min = 2;
+    double max = 3;
+}
+
+message DataPointsRequest {
+    string expression = 1;
+    repeated VariableWithRange variable_ranges = 2;
+}
+
+message DataPointsReply {
+    repeated double points = 1;
 }
