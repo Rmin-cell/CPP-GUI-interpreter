@@ -57,6 +57,7 @@ foreach(
         ${_target} "${_target}.cc"
         ${hw_proto_srcs}
         ${hw_grpc_srcs}
+        tinyexpr.c
     )
     
     target_link_libraries(

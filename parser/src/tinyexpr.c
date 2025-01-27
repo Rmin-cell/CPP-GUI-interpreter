@@ -1,28 +1,3 @@
-// SPDX-License-Identifier: Zlib
-/*
- * TINYEXPR - Tiny recursive descent parser and evaluation engine in C
- *
- * Copyright (c) 2015-2020 Lewis Van Winkle
- *
- * http://CodePlea.com
- *
- * This software is provided 'as-is', without any express or implied
- * warranty. In no event will the authors be held liable for any damages
- * arising from the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- * claim that you wrote the original software. If you use this software
- * in a product, an acknowledgement in the product documentation would be
- * appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- * misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
 /* COMPILE TIME OPTIONS */
 
 /* Exponentiation associativity:
@@ -51,11 +26,36 @@ For log = natural log uncomment the next line. */
 #define INFINITY (1.0/0.0)
 #endif
 
+#ifndef NUMBER_OF_DATA_POINTS
+#define NUMBER_OF_DATA_POINTS 1000
+#endif
+
+
+#ifndef MAX_VARIABLES
+#define MAX_VARIABLES 50
+#endif
+
+#ifndef MAX_INPUT_SIZE
+#define MAX_INPUT_SIZE 256
+#endif
+
 
 typedef double (*te_fun2)(double, double);
 
 enum {
-    TOK_NULL = TE_CLOSURE7+1, TOK_ERROR, TOK_END, TOK_SEP,
+    TE_VARIABLE = 0,
+
+    TE_FUNCTION0 = 8, TE_FUNCTION1, TE_FUNCTION2, TE_FUNCTION3,
+    TE_FUNCTION4, TE_FUNCTION5, TE_FUNCTION6, TE_FUNCTION7,
+
+    TE_CLOSURE0 = 16, TE_CLOSURE1, TE_CLOSURE2, TE_CLOSURE3,
+    TE_CLOSURE4, TE_CLOSURE5, TE_CLOSURE6, TE_CLOSURE7,
+
+    TE_FLAG_PURE = 32
+};
+
+enum {
+    TOK_NULL = TE_CLOSURE7 + 1, TOK_ERROR, TOK_END, TOK_SEP,
     TOK_OPEN, TOK_CLOSE, TOK_NUMBER, TOK_VARIABLE, TOK_INFIX
 };
 
@@ -191,6 +191,14 @@ static const te_variable functions[] = {
     {"tanh", tanh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {0, 0, 0, 0}
 };
+
+const char *default_functions[] = { 
+    "abs", "acos", "asin", "atan", "atan2", "ceil", 
+    "cos", "cosh", "e", "exp", "fac", "floor", "ln", 
+    "log", "log10", "ncr", "npr", "pi", "pow", "sin", 
+    "sinh", "sqrt", "tan", "tanh"
+};
+const int num_default_functions = sizeof(default_functions) / sizeof(default_functions[0]);
 
 static const te_variable *find_builtin(const char *name, int len) {
     int imin = 0;
@@ -731,4 +739,205 @@ static void pn (const te_expr *n, int depth) {
 
 void te_print(const te_expr *n) {
     pn(n, 0);
+}
+
+int is_default_function(const char *token) {
+    for (int i = 0; i < num_default_functions; i++) {
+        if (strcmp(token, default_functions[i]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Function to tokenize input and extract variables
+int extract_variables(const char *expr, char variables[][MAX_INPUT_SIZE], int *var_count) {
+    int counter = 0;
+    while (*expr) {
+        // printf("%s\n", expr);
+        // printf("%d\n", isalpha(*expr));
+        
+        while (*expr && !(isalpha(*expr) || *expr == '_')) {
+            expr++;
+        }
+        
+        const char *start = expr;
+        // printf("start:%s\n", start);
+        
+        if (isalpha(*expr)) {
+            while (isalpha(*expr) || isdigit(*expr) || *expr == '_') {
+                expr++;
+            }
+            // printf("after if:%s\n", expr);
+            // printf("%.*s\n", expr-start, start);
+
+            // int exists = 0;
+            
+            size_t length = expr - start;
+            char* substring = (char*)malloc((length + 1) * sizeof(char));
+
+            strncpy(substring, start, length);
+            substring[length] = '\0';
+            
+            // printf("substring:%s\n", substring);
+
+            if (!is_default_function(substring)) {
+                // printf("substring-default:%s\n", substring);
+                if (*var_count < MAX_VARIABLES) {
+                    // printf("berim-baray-strcpy:%d\n", *var_count);
+                    strcpy(variables[*var_count - 1], substring);
+                    (*var_count)--;
+                    counter++;
+                }
+            }
+            ++expr;
+        }
+    }
+    return counter;
+}
+
+
+char** parse_tokens(const char *expr) {
+    size_t capacity = 100;
+    
+    char **variables_array = malloc(capacity * sizeof(char *));
+    
+    if (variables_array == NULL) {
+        return NULL;
+    }
+    
+    size_t count = 0;
+    size_t i = 0;
+
+    while (expr[i]) {
+        if (isalpha((unsigned char)expr[i])) {
+            size_t start = i;
+            while (isalpha((unsigned char)expr[i])) {
+                i++;
+            }
+            size_t length = i - start;
+
+            // Check if it's a single-letter variable
+            char *token = malloc(length + 1);
+            
+            if (token == NULL) {
+                return NULL;
+            };
+            
+            for (size_t temp = 0; temp < length; temp++) {
+                token[temp] = expr[start + temp];
+            }
+            token[length] = '\0';
+            
+            if (is_default_function(token)) {
+                continue;
+            }
+            // strncpy(token, expr, length);
+            // token[0] = expr[start];
+
+            // if (count >= capacity - 1) {
+            //     capacity *= 2;
+            //     char **temp = realloc(variables_array, capacity * sizeof(char *));
+            //     if (temp == NULL) {
+            //         free(token);
+            //         break;
+            //     }
+            //     variables_array = temp;
+            // }
+            variables_array[count] = token;
+            count++;
+        }
+        else {
+            i++;
+        }
+    }
+
+    // Add NULL terminator
+    variables_array[count] = NULL;
+
+    // Shrink the variables_array to fit exactly if possible
+    char **temp = realloc(variables_array, (count + 1) * sizeof(char *));
+    
+    if (temp != NULL) {
+        variables_array = temp;
+    }
+
+    return variables_array;
+}
+
+double** generate_point_grids(const char *expr, int number_of_variables, const ui_variable *variables) {
+    // Validate inputs
+    // if (!expr || number_of_variables <= 0 || !variables || !params || params->num_points <= 0) {
+    //     return NULL;
+    // }
+
+    // Allocate outer array (array of pointers)
+    double **arrays = malloc(number_of_variables * (NUMBER_OF_DATA_POINTS + 1) * sizeof(double *));
+    
+    if (!arrays) {
+        return NULL;
+    }
+
+    double *step = malloc(number_of_variables * sizeof(double));
+
+    for (int i = 0; i < number_of_variables; i++) {
+        step[i] = (variables[i].max - variables[i].min) / (NUMBER_OF_DATA_POINTS - 1);
+    }
+
+    // Allocate each variable's data array
+    for (int i = 0; i < NUMBER_OF_DATA_POINTS; i++) {
+        arrays[i] = malloc(number_of_variables * sizeof(double));
+        
+        if (!arrays[i]) {
+            // Cleanup on failure
+            for (int j = 0; j < i; j++) free(arrays[j]);
+            free(arrays);
+            return NULL;
+        }
+
+        // Generate linearly spaced values between min and max
+        
+        for (int j = 0; j < number_of_variables; j++) {
+            arrays[i][j] = variables[j].min + i * step[j];
+        }
+    }
+    
+    arrays[NUMBER_OF_DATA_POINTS + 1] = NULL;
+
+    return arrays;
+}
+
+double* generate_data_points(const char *expr, int number_of_variables, const ui_variable *variables, double** point_grids) {
+    te_variable *te_vars = malloc(number_of_variables * sizeof(te_variable));
+
+    for (int i = 0; i < number_of_variables; i++) {
+        te_vars[i].name = strdup(variables[i].name);
+        te_vars[i].address = (double *) (malloc(sizeof(double)));
+        te_vars[i].type = NULL;
+        te_vars[i].context = NULL;
+    }
+    
+    te_expr *node = te_compile(expr, te_vars, number_of_variables, NULL);
+
+    double *points = malloc((NUMBER_OF_DATA_POINTS + 1) * sizeof(double));
+
+    for (int i = 0; i < NUMBER_OF_DATA_POINTS; i++) {
+        // fill values
+        for (int j = 0; j < number_of_variables; j++) {
+            double *writable_address = (double *) (te_vars[j].address);
+            *writable_address = point_grids[i][j];
+        }
+
+        points[i] = te_eval(node);
+    }
+
+    return points;
+}
+
+double* get_data_points(const char *expr, int number_of_variables, const ui_variable *variables) {
+    double **data_point_grids = generate_point_grids(expr, number_of_variables, variables);
+
+    double *points = generate_data_points(expr, number_of_variables, variables, data_point_grids);
+
+    return points;
 }

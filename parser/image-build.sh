@@ -4,7 +4,7 @@ if [ -f .env ]; then
     source .env
 fi
 
-version="v0.0.2"
+version="v0.0.3"
 image_name="aaa-pl-project"
 docker_namspace=$DOCKER_NAMESPACE
 push=false
