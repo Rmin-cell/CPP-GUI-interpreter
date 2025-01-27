@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Math Expression Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        input, button {
+            padding: 8px;
+            margin: 5px;
+        }
+        .variable-range {
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        #plot-container {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+        }
+        #echart {
+            width: 100%;
+            height: 100%;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Math Expression Analyzer</h1>
+
+        <div class="input-group">
+            <input type="text" id="expression" placeholder="Enter math expression (e.g., (x^2) + sqrt(10))">
+            <button onclick="fetchVariables()">Analyze</button>
+        </div>
+
+        <div id="variables-container"></div>
+        <div id="plot-container"></div>
+        <div id="points-list"></div>
+    </div>
+
+    <script>
+        let currentVariables = [];
+
+        function fetchVariables() {
+            const expression = document.getElementById('expression').value;
+            if (!expression) {
+                alert('Please enter a mathematical expression');
+                return;
+            }
+
+            fetch('http://localhost:8080/variables', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ expression: expression })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('variables-container');
+                container.innerHTML = '';
+                currentVariables = data.tokens;
+
+                data.tokens.forEach(variable => {
+                    const div = document.createElement('div');
+                    div.className = 'variable-range';
+                    div.innerHTML = `
+                        <h3>Variable: ${variable}</h3>
+                        <div>
+                            <label>Min:</label>
+                            <input type="number" id="${variable}-min" step="any" required>
+                            <label>Max:</label>
+                            <input type="number" id="${variable}-max" step="any" required>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+
+                const plotButton = document.createElement('button');
+                plotButton.textContent = 'Plot';
+                plotButton.style.marginTop = '10px';
+                plotButton.onclick = plotExpression;
+                container.appendChild(plotButton);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to analyze expression. Check console for details.');
+            });
+        }
+
+        function plotExpression() {
+            const ranges = currentVariables.map(variable => {
+                const min = parseFloat(document.getElementById(`${variable}-min`).value);
+                const max = parseFloat(document.getElementById(`${variable}-max`).value);
+                if (isNaN(min) || isNaN(max) || min >= max) {
+                    throw new Error(`Invalid range for ${variable}`);
+                    alert(`Invalid range for ${variable}`);
+                }
+                return [variable, min, max];
+            });
+
+            const expression = document.getElementById('expression').value;
+            if (!expression) {
+                alert('Please enter a mathematical expression');
+                return;
+            }
+
+            fetch('http://localhost:8080/points', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "expression": expression,
+                    "variables": ranges
+                })
+            })
+            .then(response => response.json())
+            .then(points => {
+                displayResults(points, ranges);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'Failed to plot expression');
+            });
+        }
+
+        function displayResults(points, ranges) {
+            const plotContainer = document.getElementById('plot-container');
+            // const list = document.getElementById('points-list');
+
+            // Clear previous results
+            plotContainer.innerHTML = '<div id="echart"></div>';
+            // list.innerHTML = '';
+            const echartPlot = document.getElementById('echart');
+
+            // Initialize Echarts instance
+            const chart = echarts.init(echartPlot);
+
+            // Get first variable range (assuming single variable for plotting)
+            const [variable, min, max] = ranges[0];
+            const xValues = Array.from({ length: points.length }, (_, i) =>
+                min + (max - min) * i / (points.length - 1 || 1)
+            );
+
+            // Configure Echarts options
+            const option = {
+                title: {
+                    text: 'Plot of Expression',
+                },
+                tooltip: {
+                    trigger: 'axis',
+                },
+                xAxis: {
+                    type: 'category',
+                    data: xValues.map(x => x.toFixed(2)),
+                    name: variable,
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'Value',
+                },
+                series: [
+                    {
+                        name: 'Values',
+                        type: 'line',
+                        data: points["points"].map(point => point.toFixed(2)),
+                    }
+                ],
+            };
+
+            // Render chart
+            chart.setOption(option);
+
+            // Create points table
+            // list.innerHTML = `<h3>Calculated Points (${points.length} samples):</h3>`;
+            // const table = document.createElement('table');
+            // table.innerHTML = `
+            //     <tr>
+            //         <th>${variable}</th>
+            //         <th>Value</th>
+            //     </tr>
+            // `;
+
+            // points["points"].forEach((point, index) => {
+            //     const row = document.createElement('tr');
+            //     row.innerHTML = `
+            //         <td>${xValues[index].toFixed(2)}</td>
+            //         <td>${point.toFixed(2)}</td>
+            //     `;
+            //     table.appendChild(row);
+            // });
+            // list.appendChild(table);
+        }
+    </script>
+</body>
+</html>
