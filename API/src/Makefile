@@ -1,7 +1,7 @@
 PROTOC = protoc
 PROTO_GO_OUT = .
 PROTO_GRPC_OUT = .
-PROTO_PATH = ../shared/config/proto
+PROTO_PATH = ../../shared/config/proto
 
 TARGET = proto
 
