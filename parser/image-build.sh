@@ -33,7 +33,12 @@ while [ -n "$1" ]; do
     shift
 done
 
+mkdir -p ./shared/config
+cp -r ../shared/config ./shared
+
 docker build -t $image_name:$version .
+
+rm -r ./shared
 
 if [ "$push" == "true" ]; then
     docker image tag $image_name:$version ghcr.io/$docker_namspace/$image_name:$version

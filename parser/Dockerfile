@@ -90,6 +90,9 @@ COPY --from=grpc-builder /usr/local /usr/local
 # --- --- --- ^&^ --- --- --- #
 FROM grpc-runtime AS app-builder
 
+WORKDIR /
+COPY ./shared /shared
+
 WORKDIR /app
 COPY . .
 
