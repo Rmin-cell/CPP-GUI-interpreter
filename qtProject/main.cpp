@@ -265,25 +265,24 @@ public:
         connect(addVariableButton, &QPushButton::clicked, this, &EquationInterpreter::onAddVariableClicked);
         mainLayout->addWidget(addVariableButton);
 
-        // Equation input
-        QLabel *equationLabel = new QLabel("Enter your equation below (e.g., 2*x+sin(x)):", this);
-        equationLabel->setStyleSheet("QLabel { font-size: 14px; color: #555; }");
-        equationInput = new QLineEdit(this);
-        equationInput->setPlaceholderText("Enter equation here...");
-        mainLayout->addWidget(equationLabel);
-        mainLayout->addWidget(equationInput);
+        // Create scroll area for dynamic equations
+        QScrollArea *equationScrollArea = new QScrollArea(this);
+        QWidget *equationScrollContent = new QWidget(equationScrollArea);
+        equationLayout = new QVBoxLayout(equationScrollContent);
+        equationScrollArea->setWidget(equationScrollContent);
+        equationScrollArea->setWidgetResizable(true);
 
-        // Parse tree button
-        QPushButton *parseTreeButton = new QPushButton("Show Parse Tree", this);
-        parseTreeButton->setIcon(QIcon(":/icons/tree.png")); // Add an icon
-        connect(parseTreeButton, &QPushButton::clicked, this, &EquationInterpreter::onParseTreeClicked);
-        mainLayout->addWidget(parseTreeButton);
+        // Add a label to specify where to insert equations
+        QLabel *equationSpecLabel = new QLabel("Add equations below:", this);
+        equationSpecLabel->setStyleSheet("QLabel { font-size: 14px; color: #555; }");
+        mainLayout->addWidget(equationSpecLabel);
+        mainLayout->addWidget(equationScrollArea);
 
-        // Plot button
-        //QPushButton *plotButton = new QPushButton("Show Plot", this);
-        //plotButton->setIcon(QIcon(":/icons/chart.png")); // Add an icon
-        //connect(plotButton, &QPushButton::clicked, this, &EquationInterpreter::onPlotClicked);
-        //mainLayout->addWidget(plotButton);
+        // Add equation button
+        QPushButton *addEquationButton = new QPushButton("Add Equation", this);
+        addEquationButton->setIcon(QIcon(":/icons/add.png")); // Add an icon
+        connect(addEquationButton, &QPushButton::clicked, this, &EquationInterpreter::onAddEquationClicked);
+        mainLayout->addWidget(addEquationButton);
 
         // Add a spacer to push everything up
         mainLayout->addSpacerItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
@@ -342,81 +341,54 @@ private slots:
         variableLayout->addWidget(variableWidget);
     }
 
-    void onParseTreeClicked() {
-    // Check if the equation is empty
-    if (equationInput->text().isEmpty()) {
-        ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
-        parseTreeWindow->setError("Error: Please enter an equation before generating the parse tree.");
-        parseTreeWindow->exec();
-        return;
+    void onAddEquationClicked() {
+        QWidget *equationWidget = new QWidget(this);
+        QHBoxLayout *equationRowLayout = new QHBoxLayout(equationWidget);
+
+        QLineEdit *equationInput = new QLineEdit(equationWidget);
+        equationInput->setPlaceholderText("Enter equation here...");
+        QPushButton *parseButton = new QPushButton("Parse", equationWidget);
+        parseButton->setIcon(QIcon(":/icons/tree.png")); // Add an icon
+        QPushButton *clearButton = new QPushButton("Clear", equationWidget);
+        clearButton->setIcon(QIcon(":/icons/clear.png")); // Add an icon
+        clearButton->setStyleSheet("QPushButton { background-color: #f44336; } QPushButton:hover { background-color: #d32f2f; }");
+
+        connect(parseButton, &QPushButton::clicked, [this, equationInput]() {
+            onParseTreeClicked(equationInput->text());
+        });
+
+        equationRowLayout->addWidget(equationInput);
+        equationRowLayout->addWidget(parseButton);
+        equationRowLayout->addWidget(clearButton);
+
+        connect(clearButton, &QPushButton::clicked, [equationWidget]() {
+            delete equationWidget;
+        });
+
+        equationLayout->addWidget(equationWidget);
     }
 
-    // Generate parse tree
-    QString equation = equationInput->text();
-    QString parseTree = generateParseTree(equation.toStdString());
-
-    // Open parse tree window
-    ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
-    parseTreeWindow->setParseTree(parseTree);
-    parseTreeWindow->exec();
-}
-
-    void onPlotClicked() {
-        // Check if no variables are added
-        if (variableLayout->count() == 0) {
-            PlotWindow *plotWindow = new PlotWindow(this);
-            plotWindow->setError("Error: Please add at least one variable before plotting.");
-            plotWindow->exec();
-            return;
-        }
-
+    void onParseTreeClicked(const QString &equation) {
         // Check if the equation is empty
-        if (equationInput->text().isEmpty()) {
-            PlotWindow *plotWindow = new PlotWindow(this);
-            plotWindow->setError("Error: Please enter an equation before plotting.");
-            plotWindow->exec();
+        if (equation.isEmpty()) {
+            ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
+            parseTreeWindow->setError("Error: Please enter an equation before generating the parse tree.");
+            parseTreeWindow->exec();
             return;
         }
 
-        // Collect variable data
-        std::map<std::string, std::pair<double, double>> variables;
-        for (int i = 0; i < variableLayout->count(); i++) {
-            QWidget *widget = variableLayout->itemAt(i)->widget();
-            if (!widget) continue;
+        // Generate parse tree
+        QString parseTree = generateParseTree(equation.toStdString());
 
-            QLineEdit *nameInput = widget->findChild<QLineEdit *>();
-            QLineEdit *minInput = widget->findChild<QLineEdit *>(QString(), Qt::FindDirectChildrenOnly);
-            QLineEdit *maxInput = widget->findChild<QLineEdit *>(QString(), Qt::FindDirectChildrenOnly);
-
-            if (!nameInput || !minInput || !maxInput) continue;
-
-            QString name = nameInput->text();
-            QString min = minInput->text();
-            QString max = maxInput->text();
-
-            bool minValid = false, maxValid = false;
-            double minVal = min.toDouble(&minValid);
-            double maxVal = max.toDouble(&maxValid);
-
-            if (name.isEmpty() || !minValid || !maxValid || minVal >= maxVal) {
-                PlotWindow *plotWindow = new PlotWindow(this);
-                plotWindow->setError("Error: Invalid input values for variable " + name);
-                plotWindow->exec();
-                return;
-            }
-
-            variables[name.toStdString()] = {minVal, maxVal};
-        }
-
-        // Open plot window and plot the equation
-        PlotWindow *plotWindow = new PlotWindow(this);
-        plotWindow->plotEquation(equationInput->text(), variables);
-        plotWindow->exec();
+        // Open parse tree window
+        ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
+        parseTreeWindow->setParseTree(parseTree);
+        parseTreeWindow->exec();
     }
 
 private:
     QVBoxLayout *variableLayout;
-    QLineEdit *equationInput;
+    QVBoxLayout *equationLayout;
 
     // Token types for the parser
     enum TokenType {
