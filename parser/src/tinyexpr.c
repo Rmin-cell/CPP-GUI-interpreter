@@ -26,11 +26,6 @@ For log = natural log uncomment the next line. */
 #define INFINITY (1.0/0.0)
 #endif
 
-#ifndef NUMBER_OF_DATA_POINTS
-#define NUMBER_OF_DATA_POINTS 1000
-#endif
-
-
 #ifndef MAX_VARIABLES
 #define MAX_VARIABLES 50
 #endif
@@ -870,10 +865,9 @@ double** generate_point_grids(const char *expr, int number_of_variables, const u
     // if (!expr || number_of_variables <= 0 || !variables || !params || params->num_points <= 0) {
     //     return NULL;
     // }
-
+    size_t total_combinations = (size_t) (ceil(pow(NUMBER_OF_DATA_POINTS, number_of_variables)));
     // Allocate outer array (array of pointers)
-    double **arrays = malloc(number_of_variables * (NUMBER_OF_DATA_POINTS + 1) * sizeof(double *));
-    
+    double **arrays = malloc((total_combinations + 1) * sizeof(double *));
     if (!arrays) {
         return NULL;
     }
@@ -885,7 +879,7 @@ double** generate_point_grids(const char *expr, int number_of_variables, const u
     }
 
     // Allocate each variable's data array
-    for (int i = 0; i < NUMBER_OF_DATA_POINTS; i++) {
+    for (int i = 0; i < total_combinations; i++) {
         arrays[i] = malloc(number_of_variables * sizeof(double));
         
         if (!arrays[i]) {
@@ -896,13 +890,33 @@ double** generate_point_grids(const char *expr, int number_of_variables, const u
         }
 
         // Generate linearly spaced values between min and max
-        
-        for (int j = 0; j < number_of_variables; j++) {
-            arrays[i][j] = variables[j].min + i * step[j];
+        // for (int j = 0; j < (size_t) (ceil(pow(NUMBER_OF_DATA_POINTS, number_of_variables))); j++) {
+        //     printf("j: %d\n", j);
+        //     for (int z = 0; z < number_of_variables; z++) {
+        //         arrays[i][j] = variables[z].min + (int) (log10(i) / log10(NUMBER_OF_DATA_POINTS)) * step[z];
+        //     }
+        // }
+        // Calculate indices for each dimension
+        int remainder = i;
+
+        for (int dim = 0; dim < number_of_variables; dim++) {
+            int index = remainder % NUMBER_OF_DATA_POINTS;
+            remainder /= NUMBER_OF_DATA_POINTS;
+            arrays[i][dim] = variables[dim].min + index * step[dim];
+            // printf("i: %d - dim: %d\n", i, dim);
+            // if (i > 90) {
+            //     if (i < 110) {
+            //         printf("i: %d || ", i);
+            //         for (int dim = 0; dim < number_of_variables; dim++) {
+            //             printf("d: %f\t", arrays[i][dim]);
+            //         }
+            //         printf("\n");
+            //     }
+            // }
         }
     }
     
-    arrays[NUMBER_OF_DATA_POINTS + 1] = NULL;
+    arrays[total_combinations] = NULL;
 
     return arrays;
 }
@@ -919,9 +933,11 @@ double* generate_data_points(const char *expr, int number_of_variables, const ui
     
     te_expr *node = te_compile(expr, te_vars, number_of_variables, NULL);
 
-    double *points = malloc((NUMBER_OF_DATA_POINTS + 1) * sizeof(double));
+    size_t total_combinations = (size_t) (ceil(pow(NUMBER_OF_DATA_POINTS, number_of_variables)));
 
-    for (int i = 0; i < NUMBER_OF_DATA_POINTS; i++) {
+    double *points = malloc((total_combinations + 1) * sizeof(double));
+
+    for (int i = 0; i < total_combinations; i++) {
         // fill values
         for (int j = 0; j < number_of_variables; j++) {
             double *writable_address = (double *) (te_vars[j].address);

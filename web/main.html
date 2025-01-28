@@ -3,6 +3,7 @@
 <head>
     <title>Math Expression Analyzer</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2/dist/echarts-gl.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code&family=Open+Sans&family=Jersey+15&display=swap" rel="stylesheet">
@@ -352,7 +353,6 @@
             .then(points => {
                 points = points["points"]
                 
-                
                 const variableNames = ranges.map(r => r[0]);
                 
                 current_max_dimension = get_current_max_dimension();
@@ -367,7 +367,7 @@
                 }
                 
                 clearPlot(id)
-                
+
                 if (ranges.length === 1) {
                     const step = (ranges[0][2] - ranges[0][1]) / (points.length - 1)
                     
@@ -404,22 +404,42 @@
                     });
                 } 
                 else if (ranges.length === 2) {
-                    const step_x = (ranges[0][2] - ranges[0][1]) / (points.length - 1)
+                    step_factor = Math.pow(points.length, 1/ranges.length)
                     
-                    const xValues = Array.from({ length: points.length }, (_, i) =>
+                    const step_x = (ranges[0][2] - ranges[0][1]) / (step_factor - 1)
+                    
+                    const xValues = Array.from({ length: step_factor }, (_, i) =>
                         ranges[0][1] + step_x * i
                     );
 
-                    const step_y = (ranges[1][2] - ranges[1][1]) / (points.length - 1)
+                    // const step_y = (ranges[1][2] - ranges[1][1]) / (points.length - 1)
+                    const step_y = (ranges[1][2] - ranges[1][1]) / (step_factor - 1)
                     
-                    const yValues = Array.from({ length: points.length }, (_, i) =>
+                    const yValues = Array.from({ length: step_factor }, (_, i) =>
                         ranges[1][1] + step_y * i
                     );
 
+                    // console.log(step_x)
+                    // console.log(step_y)
+                    // console.log(points.length)
+                    // console.log(xValues)
+                    // console.log(yValues)
+                    const cartesian = (...a) => a.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())));
+                    // const cartesian = (...a) => a.reduceRight((a, b) => a.flatMap(d => b.map(e => [d, e].flat())));
+
+
+                    // let cartesian_product_of_x_y = xValues.Map(x => yValues.map(y => [x, y]));
+                    let cartesian_product_of_x_y = cartesian([...xValues], [...yValues])
+                    // console.log(cartesian_product_of_x_y)
+                    
                     const zValues = points;
 
-                    console.log(step_x, step_y)
-                    console.log(xValues, yValues, zValues)
+                    // console.log(step_x, step_y)
+                    // console.log(xValues, yValues, zValues)
+                    // console.log("cartesian_product_of_x_y")
+                    // console.log(cartesian_product_of_x_y);
+                    // console.log("points")
+                    // console.log(points)
 
                     // points.map((y, i) => [xValues[i], y])
 
@@ -436,27 +456,50 @@
                         
                     // }
 
+                    console.log(zValues.map((z, i) => [cartesian_product_of_x_y[i][0], cartesian_product_of_x_y[i][1], z]))
+                    console.log(points)
                     series_data.push({
                         name: id,
-                        type: 'surface',
-                        data: zValues.map((z, i) => [xValues[i], yValues[i], z])
+                        type: 'scatter3D',
+                        data: zValues.map((z, i) => [cartesian_product_of_x_y[i][1], cartesian_product_of_x_y[i][0], z]),
+                        // symbol: 'none'
+                        // data: [[1, 1, 1]]
                     })
 
+                    // console.log(series_data)
+
                     chart.setOption({
+                        backgroundColor: '#fff',
                         xAxis3D: {
                             type: 'value',
+                            min: 0,
+                            max: 5,
                             name: 'X Axis'
                         },
                         yAxis3D: {
                             type: 'value',
+                            min: 0,
+                            max: 5,
                             name: 'Y Axis'
                         },
                         zAxis3D: {
                             type: 'value',
+                            min: 0,
+                            max: 5,
                             name: 'Z Axis'
                         },
+                        grid3D: {
+                            // Required for 3D charts
+                            environment: '#fff', // Background color
+                            // viewControl: {
+                            //     // Control the camera view
+                            //     distance: 100, // Distance from the chart
+                            //     alpha: 40, // Rotation angle around the vertical axis
+                            //     beta: 40 // Rotation angle around the horizontal axis
+                            // }
+                        },
                         series: series_data
-                    });
+                    }, true);
                 }
             })
             .catch(error => {

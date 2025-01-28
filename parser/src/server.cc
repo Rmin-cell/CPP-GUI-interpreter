@@ -88,7 +88,8 @@ class ReverseServiceImplementation final : public MathExpression::Service {
 
         if (points != NULL) {
             // Loop through the tokens until NULL is encountered
-            for (size_t i = 0; i < 1000; i++) {
+            size_t total_combinations = (size_t) (ceil(pow(NUMBER_OF_DATA_POINTS, number_of_variables)));
+            for (size_t i = 0; i < total_combinations; i++) {
                 reply->add_points(points[i]);
             }
 

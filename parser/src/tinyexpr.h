@@ -2,6 +2,10 @@
 extern "C" {
 #endif
 
+#ifndef NUMBER_OF_DATA_POINTS
+#define NUMBER_OF_DATA_POINTS 100
+#endif
+
 typedef struct te_expr {
     int type;
     union {double value; const double *bound; const void *function;};

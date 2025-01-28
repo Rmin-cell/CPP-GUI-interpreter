@@ -11,7 +11,7 @@
 
 int main(int argc, char *argv[]) {
     // double x, y;
-    char *c = "(x^2)";
+    char *c = "x + y";
 
     // char **tokens = parse_tokens(c);
 
@@ -29,12 +29,13 @@ int main(int argc, char *argv[]) {
     // }
 
     ui_variable ui_v[] = {
-        {"x", 1, 10}
+        {"x", 0, 1},
+        {"y", 1, 2}
     };
 
     size_t number_of_variables = sizeof(ui_v) / sizeof(ui_variable);
 
-    // double **data_point_grids = generate_point_grids(c, number_of_variables, ui_v);
+    double **data_point_grids = generate_point_grids(c, number_of_variables, ui_v);
 
     // for (size_t i = 0; data_point_grids[i] != NULL; i++) {
     //     printf("ui_v[%d] -> [", i);
@@ -49,8 +50,10 @@ int main(int argc, char *argv[]) {
 
     double *points = get_data_points(c, number_of_variables, ui_v);
 
-    for (size_t i = 0; i < 1000; i++) {
-        printf("[%f]\n", points[i]);
+    for (size_t i = 0; i < 10000; i++) {
+        if (points[i] > 0.0) {
+            printf("[%f]\n", points[i]);
+        }
     }
 
     return 0;
