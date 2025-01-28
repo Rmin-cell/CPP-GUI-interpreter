@@ -1,56 +1,12 @@
-// SPDX-License-Identifier: Zlib
-/*
- * TINYEXPR - Tiny recursive descent parser and evaluation engine in C
- *
- * Copyright (c) 2015-2020 Lewis Van Winkle
- *
- * http://CodePlea.com
- *
- * This software is provided 'as-is', without any express or implied
- * warranty. In no event will the authors be held liable for any damages
- * arising from the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- * claim that you wrote the original software. If you use this software
- * in a product, an acknowledgement in the product documentation would be
- * appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- * misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- */
-
-#ifndef TINYEXPR_H
-#define TINYEXPR_H
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
 
 typedef struct te_expr {
     int type;
     union {double value; const double *bound; const void *function;};
     void *parameters[1];
 } te_expr;
-
-
-enum {
-    TE_VARIABLE = 0,
-
-    TE_FUNCTION0 = 8, TE_FUNCTION1, TE_FUNCTION2, TE_FUNCTION3,
-    TE_FUNCTION4, TE_FUNCTION5, TE_FUNCTION6, TE_FUNCTION7,
-
-    TE_CLOSURE0 = 16, TE_CLOSURE1, TE_CLOSURE2, TE_CLOSURE3,
-    TE_CLOSURE4, TE_CLOSURE5, TE_CLOSURE6, TE_CLOSURE7,
-
-    TE_FLAG_PURE = 32
-};
 
 typedef struct te_variable {
     const char *name;
@@ -59,7 +15,11 @@ typedef struct te_variable {
     void *context;
 } te_variable;
 
-
+typedef struct {
+    const char *name;
+    double min;
+    double max;
+} ui_variable;
 
 /* Parses the input expression, evaluates it, and frees it. */
 /* Returns NaN on error. */
@@ -79,9 +39,16 @@ void te_print(const te_expr *n);
 /* This is safe to call on NULL pointers. */
 void te_free(te_expr *n);
 
+int extract_variables(const char *, char [][256], int *);
+
+char** parse_tokens(const char *);
+
+double** generate_point_grids(const char *, int, const ui_variable *);
+
+double* generate_data_points(const char *, int, const ui_variable *, double**);
+
+double* get_data_points(const char *, int, const ui_variable *);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /*TINYEXPR_H*/
