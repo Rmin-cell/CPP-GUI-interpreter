@@ -1,0 +1,44 @@
+# Compiled object files
+*.o
+*.obj
+
+# Compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled static libraries
+*.a
+*.lib
+
+# Executable files
+*.exe
+*.out
+*.app
+
+# Debug files
+*.dSYM/
+*.dSBT/
+
+# Go specific
+*.exe
+*.test
+*.prof
+*.cover
+*.out
+*.log
+
+# Dependency directories
+vendor/
+Godeps/
+
+# IDE specific
+.vscode/
+.idea/
+
+# custom
+stuff
+*.pb.cc
+*.pb.h
+parser/src/cmake
+.env
