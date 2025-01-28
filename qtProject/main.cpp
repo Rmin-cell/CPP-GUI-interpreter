@@ -19,6 +19,13 @@
 #include <set>
 #include <algorithm>
 #include "qcustomplot.h" // Include QCustomPlot header
+#include <QGraphicsView>
+#include <QGraphicsScene>
+#include <QGraphicsTextItem>
+#include <QGraphicsLineItem>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 // Parse Tree Window
 class ParseTreeWindow : public QDialog {
@@ -38,26 +45,85 @@ public:
         errorLabel->setAlignment(Qt::AlignCenter);
         layout->addWidget(errorLabel);
 
-        // Add the parse tree display
-        parseTreeDisplay = new QTextEdit(this);
-        parseTreeDisplay->setReadOnly(true);
-        parseTreeDisplay->setStyleSheet("QTextEdit { background-color:rgb(17, 16, 16); border: 1px solid #ccc; padding: 10px; }");
-        layout->addWidget(parseTreeDisplay);
+        // Add QGraphicsView for displaying the parse tree
+        graphicsView = new QGraphicsView(this);
+        scene = new QGraphicsScene(this);
+        graphicsView->setScene(scene);
+        layout->addWidget(graphicsView);
     }
 
     void setParseTree(const QString &parseTree) {
-        parseTreeDisplay->setText(parseTree);
+        scene->clear(); // Clear any previous parse tree
         errorLabel->clear(); // Clear any previous error messages
+
+        // Draw the parse tree
+        drawParseTree(parseTree);
     }
 
     void setError(const QString &errorMessage) {
         errorLabel->setText(errorMessage); // Display the error message
-        parseTreeDisplay->clear(); // Clear the parse tree display
+        scene->clear(); // Clear the parse tree display
     }
 
 private:
-    QTextEdit *parseTreeDisplay;
+    QGraphicsView *graphicsView;
+    QGraphicsScene *scene;
     QLabel *errorLabel; // Label to display errors
+
+    void drawParseTree(const QString &parseTree) {
+        scene->clear(); // Clear any previous parse tree
+
+        QJsonDocument doc = QJsonDocument::fromJson(parseTree.toUtf8());
+        if (!doc.isObject()) {
+            errorLabel->setText("Error: Invalid parse tree format.");
+            return;
+        }
+
+        QJsonObject rootObj = doc.object();
+        drawNode(rootObj, 200, 50, nullptr);
+    }
+
+    void drawNode(const QJsonObject &node, int x, int y, QGraphicsTextItem *parent) {
+    QString type = node["type"].toString();
+    QString text;
+
+    if (type == "Expression" || type == "Term") {
+        text = node["operator"].toString();
+    } else if (type == "Number" || type == "Variable") {
+        text = node["value"].toString();
+    } else if (type == "Function") {
+        text = node["name"].toString();
+    } else if (type == "Parentheses") {
+        text = "()";
+    } else {
+        text = "Unknown";
+    }
+
+    QGraphicsTextItem *item = scene->addText(text);
+    item->setPos(x, y);
+
+    if (parent) {
+        QPen pen(Qt::white); // Set the pen color to white
+        scene->addLine(parent->x() + parent->boundingRect().width() / 2, parent->y() + parent->boundingRect().height(),
+                       item->x() + item->boundingRect().width() / 2, item->y(), pen);
+    }
+
+    int xOffset = 50; // Adjust this value to decrease the horizontal distance between nodes
+    int yOffset = 50; // Adjust this value to decrease the vertical distance between nodes
+
+    if (node.contains("left")) {
+        drawNode(node["left"].toObject(), x - xOffset, y + yOffset, item);
+    }
+    if (node.contains("right")) {
+        drawNode(node["right"].toObject(), x + xOffset, y + yOffset, item);
+    }
+    if (node.contains("argument")) {
+        drawNode(node["argument"].toObject(), x, y + yOffset, item);
+    }
+    if (node.contains("expression")) {
+        drawNode(node["expression"].toObject(), x, y + yOffset, item);
+    }
+}
 };
 
 // Plot Window
@@ -277,23 +343,23 @@ private slots:
     }
 
     void onParseTreeClicked() {
-        // Check if the equation is empty
-        if (equationInput->text().isEmpty()) {
-            ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
-            parseTreeWindow->setError("Error: Please enter an equation before generating the parse tree.");
-            parseTreeWindow->exec();
-            return;
-        }
-
-        // Generate parse tree
-        QString equation = equationInput->text();
-        QString parseTree = generateParseTree(equation.toStdString());
-
-        // Open parse tree window
+    // Check if the equation is empty
+    if (equationInput->text().isEmpty()) {
         ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
-        parseTreeWindow->setParseTree("Equation: " + equation + "\n\nParse Tree:\n" + parseTree);
+        parseTreeWindow->setError("Error: Please enter an equation before generating the parse tree.");
         parseTreeWindow->exec();
+        return;
     }
+
+    // Generate parse tree
+    QString equation = equationInput->text();
+    QString parseTree = generateParseTree(equation.toStdString());
+
+    // Open parse tree window
+    ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
+    parseTreeWindow->setParseTree(parseTree);
+    parseTreeWindow->exec();
+}
 
     void onPlotClicked() {
         // Check if no variables are added
@@ -417,7 +483,7 @@ private:
     QString generateParseTree(const std::string &equation) {
         std::vector<Token> tokens = tokenize(equation);
         size_t index = 0;
-        return parseExpression(tokens, index).c_str();
+        return QString::fromStdString(parseExpression(tokens, index));
     }
 
     // Parse an expression
@@ -428,7 +494,7 @@ private:
             std::string op = tokens[index].value;
             index++;
             std::string right = parseTerm(tokens, index);
-            left = "Expression:\n  " + left + "\n  Operator: " + op + "\n  " + right;
+            left = "{ \"type\": \"Expression\", \"left\": " + left + ", \"operator\": \"" + op + "\", \"right\": " + right + " }";
         }
 
         return left;
@@ -442,7 +508,7 @@ private:
             std::string op = tokens[index].value;
             index++;
             std::string right = parseFactor(tokens, index);
-            left = "Term:\n  " + left + "\n  Operator: " + op + "\n  " + right;
+            left = "{ \"type\": \"Term\", \"left\": " + left + ", \"operator\": \"" + op + "\", \"right\": " + right + " }";
         }
 
         return left;
@@ -451,9 +517,9 @@ private:
     // Parse a factor
     std::string parseFactor(const std::vector<Token> &tokens, size_t &index) {
         if (tokens[index].type == TOKEN_NUMBER) {
-            return "Number: " + tokens[index++].value;
+            return "{ \"type\": \"Number\", \"value\": \"" + tokens[index++].value + "\" }";
         } else if (tokens[index].type == TOKEN_VARIABLE) {
-            return "Variable: " + tokens[index++].value;
+            return "{ \"type\": \"Variable\", \"value\": \"" + tokens[index++].value + "\" }";
         } else if (tokens[index].type == TOKEN_FUNCTION) {
             std::string func = tokens[index++].value;
             if (tokens[index].type == TOKEN_LPAREN) {
@@ -462,7 +528,7 @@ private:
                 if (tokens[index].type == TOKEN_RPAREN) {
                     index++;
                 }
-                return "Function: " + func + "\n  " + arg;
+                return "{ \"type\": \"Function\", \"name\": \"" + func + "\", \"argument\": " + arg + " }";
             }
         } else if (tokens[index].type == TOKEN_LPAREN) {
             index++;
@@ -470,10 +536,10 @@ private:
             if (tokens[index].type == TOKEN_RPAREN) {
                 index++;
             }
-            return "Parentheses:\n  " + expr;
+            return "{ \"type\": \"Parentheses\", \"expression\": " + expr + " }";
         }
 
-        return "Unknown";
+        return "{ \"type\": \"Unknown\" }";
     }
 };
 
