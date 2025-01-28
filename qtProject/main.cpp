@@ -266,7 +266,7 @@ public:
         mainLayout->addWidget(addVariableButton);
 
         // Equation input
-        QLabel *equationLabel = new QLabel("Enter your equation below (e.g., y=x^2):", this);
+        QLabel *equationLabel = new QLabel("Enter your equation below (e.g., 2*x+sin(x)):", this);
         equationLabel->setStyleSheet("QLabel { font-size: 14px; color: #555; }");
         equationInput = new QLineEdit(this);
         equationInput->setPlaceholderText("Enter equation here...");
@@ -280,10 +280,10 @@ public:
         mainLayout->addWidget(parseTreeButton);
 
         // Plot button
-        QPushButton *plotButton = new QPushButton("Show Plot", this);
-        plotButton->setIcon(QIcon(":/icons/chart.png")); // Add an icon
-        connect(plotButton, &QPushButton::clicked, this, &EquationInterpreter::onPlotClicked);
-        mainLayout->addWidget(plotButton);
+        //QPushButton *plotButton = new QPushButton("Show Plot", this);
+        //plotButton->setIcon(QIcon(":/icons/chart.png")); // Add an icon
+        //connect(plotButton, &QPushButton::clicked, this, &EquationInterpreter::onPlotClicked);
+        //mainLayout->addWidget(plotButton);
 
         // Add a spacer to push everything up
         mainLayout->addSpacerItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
