@@ -80,50 +80,75 @@ private:
         }
 
         QJsonObject rootObj = doc.object();
-        drawNode(rootObj, 200, 50, nullptr);
+        int initialX = 200; // Initial x position for the root node
+        int initialY = 50;  // Initial y position for the root node
+        drawNode(rootObj, initialX, initialY, nullptr);
+    }
+
+    int calculateSubtreeWidth(const QJsonObject &node) {
+        int width = 0;
+
+        if (node.contains("left")) {
+            width += calculateSubtreeWidth(node["left"].toObject());
+        }
+        if (node.contains("right")) {
+            width += calculateSubtreeWidth(node["right"].toObject());
+        }
+
+        return std::max(width, 1); // Ensure minimum width of 1
     }
 
     void drawNode(const QJsonObject &node, int x, int y, QGraphicsTextItem *parent) {
-    QString type = node["type"].toString();
-    QString text;
+        QString type = node["type"].toString();
+        QString text;
 
-    if (type == "Expression" || type == "Term") {
-        text = node["operator"].toString();
-    } else if (type == "Number" || type == "Variable") {
-        text = node["value"].toString();
-    } else if (type == "Function") {
-        text = node["name"].toString();
-    } else if (type == "Parentheses") {
-        text = "()";
-    } else {
-        text = "Unknown";
-    }
+        if (type == "Expression" || type == "Term") {
+            text = node["operator"].toString();
+        } else if (type == "Number" || type == "Variable") {
+            text = node["value"].toString();
+        } else if (type == "Function") {
+            text = node["name"].toString();
+        } else if (type == "Parentheses") {
+            text = "()";
+        } else {
+            text = "Unknown";
+        }
 
-    QGraphicsTextItem *item = scene->addText(text);
-    item->setPos(x, y);
+        QGraphicsTextItem *item = scene->addText(text);
+        item->setPos(x, y);
 
-    if (parent) {
-        QPen pen(Qt::white); // Set the pen color to white
-        scene->addLine(parent->x() + parent->boundingRect().width() / 2, parent->y() + parent->boundingRect().height(),
-                       item->x() + item->boundingRect().width() / 2, item->y(), pen);
-    }
+        if (parent) {
+            QPen pen(Qt::white); // Set the pen color to white
+            scene->addLine(parent->x() + parent->boundingRect().width() / 2, parent->y() + parent->boundingRect().height(),
+                           item->x() + item->boundingRect().width() / 2, item->y(), pen);
+        }
 
-    int xOffset = 50; // Adjust this value to decrease the horizontal distance between nodes
-    int yOffset = 50; // Adjust this value to decrease the vertical distance between nodes
+        int xOffset = 50; // Adjust this value to decrease the horizontal distance between nodes
+        int yOffset = 50; // Adjust this value to decrease the vertical distance between nodes
 
-    if (node.contains("left")) {
-        drawNode(node["left"].toObject(), x - xOffset, y + yOffset, item);
+        int leftSubtreeWidth = 0;
+        int rightSubtreeWidth = 0;
+
+        if (node.contains("left")) {
+            leftSubtreeWidth = calculateSubtreeWidth(node["left"].toObject()) * xOffset;
+        }
+        if (node.contains("right")) {
+            rightSubtreeWidth = calculateSubtreeWidth(node["right"].toObject()) * xOffset;
+        }
+
+        if (node.contains("left")) {
+            drawNode(node["left"].toObject(), x - leftSubtreeWidth / 2, y + yOffset, item);
+        }
+        if (node.contains("right")) {
+            drawNode(node["right"].toObject(), x + rightSubtreeWidth / 2, y + yOffset, item);
+        }
+        if (node.contains("argument")) {
+            drawNode(node["argument"].toObject(), x, y + yOffset, item);
+        }
+        if (node.contains("expression")) {
+            drawNode(node["expression"].toObject(), x, y + yOffset, item);
+        }
     }
-    if (node.contains("right")) {
-        drawNode(node["right"].toObject(), x + xOffset, y + yOffset, item);
-    }
-    if (node.contains("argument")) {
-        drawNode(node["argument"].toObject(), x, y + yOffset, item);
-    }
-    if (node.contains("expression")) {
-        drawNode(node["expression"].toObject(), x, y + yOffset, item);
-    }
-}
 };
 
 // Plot Window
@@ -235,8 +260,8 @@ public:
         // Apply a global stylesheet
         setStyleSheet(
             "QMainWindow { background-color: #f5f5f5; }"
-            "QPushButton { background-color: #4CAF50; color: white; border: none; padding: 10px; font-size: 14px; }"
-            "QPushButton:hover { background-color: #45a049; }"
+            "QPushButton { background-color:rgb(74, 190, 192); color: white; border: none; padding: 10px; font-size: 14px; }"
+            "QPushButton:hover { background-color:rgb(45, 53, 172); }"
             "QLineEdit { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }"
             "QLineEdit:invalid { border: 1px solid red; }"
             "QLabel { font-size: 14px; color: #333; }"
@@ -306,7 +331,7 @@ private slots:
         maxInput->setPlaceholderText("Max Value");
         QPushButton *clearButton = new QPushButton("Clear", variableWidget);
         clearButton->setIcon(QIcon(":/icons/clear.png")); // Add an icon
-        clearButton->setStyleSheet("QPushButton { background-color: #f44336; } QPushButton:hover { background-color: #d32f2f; }");
+        clearButton->setStyleSheet("QPushButton { background-color:rgb(231, 111, 13); } QPushButton:hover { background-color:rgb(169, 62, 62); }");
 
         // Validate min and max inputs
         auto validateInputs = [minInput, maxInput]() {
@@ -383,7 +408,7 @@ private slots:
         // Open parse tree window
         ParseTreeWindow *parseTreeWindow = new ParseTreeWindow(this);
         parseTreeWindow->setParseTree(parseTree);
-        parseTreeWindow->exec();
+        parseTreeWindow->show(); // Use show() instead of exec() to allow multiple windows
     }
 
 private:
