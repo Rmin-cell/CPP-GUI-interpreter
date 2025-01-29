@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"html/template"
+	"os"
 
 	pb "API/proto"
 	"google.golang.org/grpc"
@@ -15,6 +17,11 @@ import (
 
 type MathExpressionClient struct {
 	client pb.MathExpressionClient
+}
+
+type PageData struct {
+	IpAddr string
+	Port int
 }
 
 func NewMathExpressionClient(conn *grpc.ClientConn) *MathExpressionClient {
@@ -37,7 +44,7 @@ func (c *MathExpressionClient) GetVariablesList(ctx context.Context, expression 
 
 func (c *MathExpressionClient) GetDataPoints(ctx context.Context, expression string, variables []*pb.VariableWithRange) ([]float64, error) {
 	req := &pb.DataPointsRequest{
-		Expression:      expression,
+		Expression: expression,
 		VariableRanges: variables,
 	}
 
@@ -49,7 +56,6 @@ func (c *MathExpressionClient) GetDataPoints(ctx context.Context, expression str
 	return resp.GetPoints(), nil
 }
 
-// CORS middleware
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -68,13 +74,36 @@ func corsMiddleware(next http.Handler) http.Handler {
 func runRESTAPI(client *MathExpressionClient) {
 	mux := http.NewServeMux()
 
-	// Serve static files from the "static" directory
 	fs := http.FileServer(http.Dir("static"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	// Serve main.html at the root endpoint
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "static/main.html")
+		mode := os.Getenv("mode")
+		var data PageData
+
+		if mode == "p" {
+			data = PageData{
+				IpAddr: "194.5.193.210",
+				Port:   80,
+			}
+		} else {
+			data = PageData{
+				IpAddr: "127.0.0.1",
+				Port:   24000,
+			}
+		}
+
+		tmpl, err := template.ParseFiles("static/main.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	mux.HandleFunc("/variables", func(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +152,7 @@ func handlePointsEndpoint(client *MathExpressionClient, w http.ResponseWriter, r
 	}
 
 	var reqBody struct {
-		Expression string          `json:"expression"`
+		Expression string `json:"expression"`
 		Variables  [][]interface{} `json:"variables"`
 	}
 
@@ -153,7 +182,7 @@ func handlePointsEndpoint(client *MathExpressionClient, w http.ResponseWriter, r
 
 func convertVariables(restVars [][]interface{}) ([]*pb.VariableWithRange, error) {
 	grpcVars := make([]*pb.VariableWithRange, 0, len(restVars))
-	
+
 	for i, v := range restVars {
 		if len(v) != 3 {
 			return nil, fmt.Errorf("invalid variable format at position %d - expected [name, min, max]", i)
@@ -162,7 +191,7 @@ func convertVariables(restVars [][]interface{}) ([]*pb.VariableWithRange, error)
 		name, ok1 := v[0].(string)
 		min, ok2 := v[1].(float64)
 		max, ok3 := v[2].(float64)
-		
+
 		if !ok1 || !ok2 || !ok3 {
 			return nil, fmt.Errorf("invalid variable types at position %d - expected [string, number, number]", i)
 		}
@@ -173,7 +202,7 @@ func convertVariables(restVars [][]interface{}) ([]*pb.VariableWithRange, error)
 			Max:          max,
 		})
 	}
-	
+
 	return grpcVars, nil
 }
 
@@ -186,9 +215,10 @@ func sendJSONResponse(w http.ResponseWriter, statusCode int, data interface{}) {
 }
 
 func main() {
-	serverAddress := "localhost:5005"
+	parser_server = os.Getenv("parser_server_addr")
+	serverAddress := Printf("%s:5005", parser_server)
 
-	conn, err := grpc.Dial(serverAddress, 
+	conn, err := grpc.Dial(serverAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 		grpc.WithTimeout(5*time.Second),

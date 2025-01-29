@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # Go API service
+  go-api:
+    image: go-api-pl-project:v0.0.1
+    container_name: go-api
+    ports:
+      - "24000:8080"
+    depends_on:
+      - parser
+    networks:
+      - app-network
+    restart: always
+    environment:
+      - mode=p
+      - parser_server_addr=aaa
+
+  # AAA service
+  parser:
+    image: aaa-pl-project:v0.0.3
+    networks:
+      - app-network
+    restart: always
+  
+# Define a custom network for the services
+networks:
+  app-network:
+    driver: bridge
