@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Math Expression Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2/dist/echarts-gl.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code&family=Open+Sans&family=Jersey+15&display=swap" rel="stylesheet">
+    <style>
+        .jersey-15-regular {
+            font-family: "Jersey 15", serif;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        body {
+            font-family: 'Open Sans';
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        
+        input {
+            padding: 8px;
+            margin: 5px;
+            font-family: 'Fira Code';
+        }
+
+        button {
+            padding: 8px;
+            margin: 5px;
+            font-family: 'Fira Code';
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .variable-range {
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        #plot-container {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+        }
+        #echart {
+            width: 100%;
+            height: 100%;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .button-54 {
+                letter-spacing: 2px;
+                text-decoration: none;
+                color: #000;
+                cursor: pointer;
+                border: 3px solid;
+                padding: 0.25em 0.5em;
+                box-shadow: 1px 1px 0px 0px, 2px 2px 0px 0px, 3px 3px 0px 0px, 4px 4px 0px 0px, 5px 5px 0px 0px;
+                position: relative;
+                user-select: none;
+                -webkit-user-select: none;
+                touch-action: manipulation;
+            }
+
+            .button-54:active {
+                box-shadow: 0px 0px 0px 0px;
+                top: 5px;
+                left: 5px;
+            }
+
+            @media (min-width: 768px) {
+                .button-54 {
+                    padding: 0.25em 0.75em;
+                }
+                .button-56 {
+                    padding: 0 10px;
+                }
+            }
+
+        .button-56 {
+            align-items: center;
+            background-color: #fee6e3;
+            border: 2px solid #111;
+            border-radius: 8px;
+            box-sizing: border-box;
+            color: #000;
+            cursor: pointer;
+            height: 36px;
+            justify-content: center;
+            line-height: 24px;
+            max-width: 100%;
+            padding: 0 15px;
+            position: relative;
+            text-align: center;
+            text-decoration: none;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .button-56:after {
+            background-color: #111;
+            border-radius: 8px;
+            content: "";
+            display: block;
+            height: 36px;
+            left: 0;
+            width: 100%;
+            position: absolute;
+            top: -2px;
+            transform: translate(8px, 8px);
+            transition: transform .2s ease-out;
+            z-index: -1;
+        }
+
+        .button-56:hover:after {
+            transform: translate(0, 0);
+        }
+
+        .button-56:active {
+            background-color: #ffdeda;
+            outline: 0;
+        }
+
+        .button-56:hover {
+            outline: 0;
+        }
+
+        input {
+            /* width: 100%; */
+            padding: 12px;
+            font-size: 16px;
+            color: #333;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+            background-color: #f1f1f1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        input:focus {
+            border-color: #b8b8b8;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.2);
+        }
+            
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="font-family: 'Jersey 15'; font-size: 55px;">Math Expression Analyzer</h1>
+
+        <div id="expressions-container"></div>
+
+        <button class="button-54" onclick="addExpressionBox()">➕ Add Expression</button>
+        <div id="plot-container">
+            <div id="echart"></div>
+        </div>
+    </div>
+
+    <script>
+        let expressionCount = 0;
+        
+        const chart = echarts.init(document.getElementById('echart'));
+        const chartOptions = {
+            legend: {},
+            tooltip: {},
+            series: []
+        };
+
+        chart.setOption(chartOptions);
+
+        function addExpressionBox() {
+            const container = document.getElementById('expressions-container');
+            const id = `expression-${expressionCount++}`;
+
+            const expressionBox = document.createElement('div');
+            expressionBox.className = 'expression-box';
+            expressionBox.id = id;
+            expressionBox.innerHTML = `
+                <div class="input-group">
+                    <input style="width:300px;" type="text" id="${id}-input" placeholder="Enter Math Expression">
+                    <button class="button-56" onclick="fetchVariables('${id}')">Parse</button>
+                    <button class="button-56" style="background-color: #ffbcb3 !important;" onclick="removeExpressionBox('${id}')">Remove</button>
+                </div>
+                <div id="${id}-variables"></div>
+                <button onclick="plotExpression('${id}')" style="margin-top: 10px; display: none; font-size: 12px;" id="${id}-plot-button">📈 Plot</button>
+                <button onclick="clearPlot('${id}')" style="margin-top: 10px; display: none;" id="${id}-clear-button">🗑️ Clear</button>
+            `;
+            container.appendChild(expressionBox);
+        }
+
+        function removeExpressionBox(id) {
+            document.getElementById(id).remove();
+            clearPlot(id);
+        }
+
+        function clearPlot(id) {
+            let option = chart.getOption();
+            let series_data = option.series;
+            
+            let before_len = series_data.length
+
+            if (before_len != 0) {
+                number_of_variables = series_data[0].data[0].length
+            }
+            else {
+                number_of_variables = 2
+            }
+
+            series_data = series_data.filter(series => series.name !== id);
+            
+            let after_len = series_data.length
+
+            console.log(before_len, after_len);
+            
+            if (after_len != before_len) {
+                if (number_of_variables == 2) {
+                    chart.setOption({
+                        xAxis: {
+                            type: 'value', // or 'category' if needed
+                            name: 'X Axis'
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: 'Y Axis'
+                        },
+                        series: series_data
+                    }, true);
+                }
+                else if (number_of_variables == 3) {
+                    console.log("salam")
+                    chart.setOption({
+                        backgroundColor: '#fff',
+                        xAxis3D: {
+                            type: 'value',
+                            min: 0,
+                            max: 5,
+                            name: 'X Axis'
+                        },
+                        yAxis3D: {
+                            type: 'value',
+                            min: 0,
+                            max: 5,
+                            name: 'Y Axis'
+                        },
+                        zAxis3D: {
+                            type: 'value',
+                            min: 0,
+                            max: 5,
+                            name: 'Z Axis'
+                        },
+                        grid3D: {
+                            environment: '#fff',
+                        },
+                        series: series_data
+                    }, true)
+                }
+            }
+        }
+
+        function fetchVariables(id) {
+            const expression = document.getElementById(`${id}-input`).value;
+            if (!expression) {
+                alert('Please enter a mathematical expression');
+                return;
+            }
+
+            fetch('http://localhost:8080/variables', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ expression: expression })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const variableContainer = document.getElementById(`${id}-variables`);
+                variableContainer.innerHTML = '';
+
+                data.tokens.forEach(variable => {
+                    const div = document.createElement('div');
+                    div.className = 'variable-range';
+                    div.innerHTML = `
+                        <label><b>Variable</b>: ${variable}</label><br/>
+                        <label>Min:</label>
+                        <input style="width: 100px !important;" type="number" id="${id}-${variable}-min" step="any">
+                        <label>Max:</label>
+                        <input style="width: 100px !important;" type="number" id="${id}-${variable}-max" step="any">
+                    `;
+                    variableContainer.appendChild(div);
+                });
+
+                document.getElementById(`${id}-plot-button`).style.display = 'inline-block';
+                document.getElementById(`${id}-clear-button`).style.display = 'inline-block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to analyze expression. Check console for details.');
+            });
+        }
+
+        function get_current_max_dimension() {
+            let option = chart.getOption();
+            let series_data = option.series;
+
+            if (series_data.length) {
+                max = 2;
+                
+                series_data.forEach(plot => {
+                    plot.data.forEach(data => {
+                        if (data.length > max) {
+                            max = length;
+                        }
+                    });
+                });
+
+                return max
+            }
+            else {
+                return null
+            }
+        }
+
+        function plotExpression(id) {
+            const expression = document.getElementById(`${id}-input`).value;
+            if (!expression) {
+                alert('Please enter a mathematical expression');
+                return;
+            }
+
+            const variables = Array.from(document.querySelectorAll(`#${id}-variables .variable-range`));
+            
+            const ranges = variables.map(variable => {
+                const name = variable.querySelector('label').textContent.split(' ')[1];
+                const min = parseFloat(document.getElementById(`${id}-${name}-min`).value);
+                const max = parseFloat(document.getElementById(`${id}-${name}-max`).value);
+
+                if (isNaN(min) || isNaN(max) || min >= max) {
+                    throw new Error(`Invalid range for ${name}`);
+                }
+                return [name, min, max];
+            });
+
+            fetch('http://localhost:8080/points', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "expression": expression,
+                    "variables": ranges
+                })
+            })
+            .then(response => response.json())
+            .then(points => {
+                points = points["points"]
+                
+                const variableNames = ranges.map(r => r[0]);
+                
+                current_max_dimension = get_current_max_dimension();
+                
+                if (ranges.length === 1 && current_max_dimension > 2) {
+                    alert("You can not plot a 2d chart on 3d surface")
+                    return
+                }
+                else if (ranges.length === 2 && current_max_dimension == 2) {
+                    alert("You can not plot a 3d chart on 2d surface")
+                    return
+                }
+                
+                clearPlot(id)
+
+                if (ranges.length === 1) {
+                    const step = (ranges[0][2] - ranges[0][1]) / (points.length - 1)
+                    
+                    const xValues = Array.from({ length: points.length }, (_, i) =>
+                        ranges[0][1] + step * i
+                    );
+
+                    let option = chart.getOption();
+                    let series_data = option.series;
+                    
+                    series_data.push({
+                        name: id,
+                        type: 'line',
+                        smooth: true,
+                        data: points.map((y, i) => [xValues[i], y]),
+                        lineStyle: {
+                            color: `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`,
+                            type: "solid",
+                            width: 2 + Math.floor(Math.random() * 2)
+                        },
+                        symbol: 'none'
+                    })
+
+                    chart.setOption({
+                        xAxis: {
+                            type: 'value', // or 'category' if needed
+                            name: 'X Axis'
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: 'Y Axis'
+                        },
+                        series: series_data
+                    });
+                } 
+                else if (ranges.length === 2) {
+                    step_factor = Math.pow(points.length, 1/ranges.length)
+                    
+                    const step_x = (ranges[0][2] - ranges[0][1]) / (step_factor - 1)
+                    
+                    const xValues = Array.from({ length: step_factor }, (_, i) =>
+                        ranges[0][1] + step_x * i
+                    );
+
+                    // const step_y = (ranges[1][2] - ranges[1][1]) / (points.length - 1)
+                    const step_y = (ranges[1][2] - ranges[1][1]) / (step_factor - 1)
+                    
+                    const yValues = Array.from({ length: step_factor }, (_, i) =>
+                        ranges[1][1] + step_y * i
+                    );
+
+                    // console.log(step_x)
+                    // console.log(step_y)
+                    // console.log(points.length)
+                    // console.log(xValues)
+                    // console.log(yValues)
+                    const cartesian = (...a) => a.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())));
+                    // const cartesian = (...a) => a.reduceRight((a, b) => a.flatMap(d => b.map(e => [d, e].flat())));
+
+
+                    // let cartesian_product_of_x_y = xValues.Map(x => yValues.map(y => [x, y]));
+                    let cartesian_product_of_x_y = cartesian([...xValues], [...yValues])
+                    // console.log(cartesian_product_of_x_y)
+                    
+                    const zValues = points;
+
+                    // console.log(step_x, step_y)
+                    // console.log(xValues, yValues, zValues)
+                    // console.log("cartesian_product_of_x_y")
+                    // console.log(cartesian_product_of_x_y);
+                    // console.log("points")
+                    // console.log(points)
+
+                    // points.map((y, i) => [xValues[i], y])
+
+                    // points.map((y, i) => [xValues[i], y])
+
+                    let option = chart.getOption();
+                    let series_data = option.series;
+
+                    // {
+                    //     name: id,
+                    //     type: 'scatter3D',
+                    //     data: zValues,
+                    //     dimensions: [...variableNames, 'Z']
+                        
+                    // }
+
+                    console.log(zValues.map((z, i) => [cartesian_product_of_x_y[i][0], cartesian_product_of_x_y[i][1], z]))
+                    console.log(points)
+                    series_data.push({
+                        name: id,
+                        type: 'scatter3D',
+                        data: zValues.map((z, i) => [cartesian_product_of_x_y[i][1], cartesian_product_of_x_y[i][0], z]),
+                        // symbol: 'none'
+                        // data: [[1, 1, 1]]
+                    })
+
+                    // console.log(series_data)
+
+                    chart.setOption({
+                        backgroundColor: '#fff',
+                        xAxis3D: {
+                            type: 'value',
+                            min: 0,
+                            max: 5,
+                            name: 'X Axis'
+                        },
+                        yAxis3D: {
+                            type: 'value',
+                            min: 0,
+                            max: 5,
+                            name: 'Y Axis'
+                        },
+                        zAxis3D: {
+                            type: 'value',
+                            min: 0,
+                            max: 5,
+                            name: 'Z Axis'
+                        },
+                        grid3D: {
+                            // Required for 3D charts
+                            environment: '#fff', // Background color
+                            // viewControl: {
+                            //     // Control the camera view
+                            //     distance: 100, // Distance from the chart
+                            //     alpha: 40, // Rotation angle around the vertical axis
+                            //     beta: 40 // Rotation angle around the horizontal axis
+                            // }
+                        },
+                        series: series_data
+                    }, true);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'Failed to plot expression');
+            });
+        }
+
+        // --------------------------------------------------------------- \\
+        // let currentVariables = [];
+
+        // function fetchVariables() {
+        //     const expression = document.getElementById('expression').value;
+        //     if (!expression) {
+        //         alert('Please enter a mathematical expression');
+        //         return;
+        //     }
+
+        //     fetch('http://localhost:8080/variables', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //         },
+        //         body: JSON.stringify({ expression: expression })
+        //     })
+        //     .then(response => response.json())
+        //     .then(data => {
+        //         const container = document.getElementById('variables-container');
+        //         container.innerHTML = '';
+        //         currentVariables = data.tokens;
+
+        //         data.tokens.forEach(variable => {
+        //             const div = document.createElement('div');
+        //             div.className = 'variable-range';
+        //             div.innerHTML = `
+        //                 <h3>Variable: ${variable}</h3>
+        //                 <div>
+        //                     <label>Min:</label>
+        //                     <input type="number" id="${variable}-min" step="any" required>
+        //                     <label>Max:</label>
+        //                     <input type="number" id="${variable}-max" step="any" required>
+        //                 </div>
+        //             `;
+        //             container.appendChild(div);
+        //         });
+
+        //         const plotButton = document.createElement('button');
+        //         plotButton.textContent = 'Plot';
+        //         plotButton.style.marginTop = '10px';
+        //         plotButton.onclick = plotExpression;
+        //         container.appendChild(plotButton);
+        //     })
+        //     .catch(error => {
+        //         console.error('Error:', error);
+        //         alert('Failed to analyze expression. Check console for details.');
+        //     });
+        // }
+
+        // function plotExpression() {
+        //     const ranges = currentVariables.map(variable => {
+        //         const min = parseFloat(document.getElementById(`${variable}-min`).value);
+        //         const max = parseFloat(document.getElementById(`${variable}-max`).value);
+        //         if (isNaN(min) || isNaN(max) || min >= max) {
+        //             throw new Error(`Invalid range for ${variable}`);
+        //             alert(`Invalid range for ${variable}`);
+        //         }
+        //         return [variable, min, max];
+        //     });
+
+        //     const expression = document.getElementById('expression').value;
+        //     if (!expression) {
+        //         alert('Please enter a mathematical expression');
+        //         return;
+        //     }
+
+        //     fetch('http://localhost:8080/points', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //         },
+        //         body: JSON.stringify({
+        //             "expression": expression,
+        //             "variables": ranges
+        //         })
+        //     })
+        //     .then(response => response.json())
+        //     .then(points => {
+        //         displayResults(points, ranges);
+        //     })
+        //     .catch(error => {
+        //         console.error('Error:', error);
+        //         alert(error.message || 'Failed to plot expression');
+        //     });
+        // }
+
+        // function displayResults(points, ranges) {
+        //     const plotContainer = document.getElementById('plot-container');
+        //     // const list = document.getElementById('points-list');
+
+        //     // Clear previous results
+        //     plotContainer.innerHTML = '<div id="echart"></div>';
+        //     // list.innerHTML = '';
+        //     const echartPlot = document.getElementById('echart');
+
+        //     // Initialize Echarts instance
+        //     const chart = echarts.init(echartPlot);
+
+        //     // Get first variable range (assuming single variable for plotting)
+        //     const [variable, min, max] = ranges[0];
+        //     const xValues = Array.from({ length: points.length }, (_, i) =>
+        //         min + (max - min) * i / (points.length - 1 || 1)
+        //     );
+
+        //     // Configure Echarts options
+        //     const option = {
+        //         title: {
+        //             text: 'Plot of Expression',
+        //         },
+        //         tooltip: {
+        //             trigger: 'axis',
+        //         },
+        //         xAxis: {
+        //             type: 'category',
+        //             data: xValues.map(x => x.toFixed(2)),
+        //             name: variable,
+        //         },
+        //         yAxis: {
+        //             type: 'value',
+        //             name: 'Value',
+        //         },
+        //         series: [
+        //             {
+        //                 name: 'Values',
+        //                 type: 'line',
+        //                 data: points["points"].map(point => point.toFixed(2)),
+        //             }
+        //         ],
+        //     };
+
+        //     // Render chart
+        //     chart.setOption(option);
+
+            // Create points table
+            // list.innerHTML = `<h3>Calculated Points (${points.length} samples):</h3>`;
+            // const table = document.createElement('table');
+            // table.innerHTML = `
+            //     <tr>
+            //         <th>${variable}</th>
+            //         <th>Value</th>
+            //     </tr>
+            // `;
+
+            // points["points"].forEach((point, index) => {
+            //     const row = document.createElement('tr');
+            //     row.innerHTML = `
+            //         <td>${xValues[index].toFixed(2)}</td>
+            //         <td>${point.toFixed(2)}</td>
+            //     `;
+            //     table.appendChild(row);
+            // });
+            // list.appendChild(table);
+        // }
+    </script>
+</body>
+</html>
