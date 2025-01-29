@@ -458,7 +458,7 @@
                     series_data.push({
                         name: id,
                         type: 'scatter3D',
-                        data: zValues.map((z, i) => [cartesian_product_of_x_y[i][1], cartesian_product_of_x_y[i][0], z])
+                        data: zValues.map((z, i) => [cartesian_product_of_x_y[i][0], cartesian_product_of_x_y[i][1], z])
                     })
 
                     chart.setOption({

@@ -215,8 +215,8 @@ func sendJSONResponse(w http.ResponseWriter, statusCode int, data interface{}) {
 }
 
 func main() {
-	parser_server = os.Getenv("parser_server_addr")
-	serverAddress := Printf("%s:5005", parser_server)
+	parser_server := os.Getenv("parser_server_addr")
+	serverAddress := fmt.Sprintf("%s:5005", parser_server)
 
 	conn, err := grpc.Dial(serverAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
