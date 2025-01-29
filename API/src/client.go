@@ -68,6 +68,15 @@ func corsMiddleware(next http.Handler) http.Handler {
 func runRESTAPI(client *MathExpressionClient) {
 	mux := http.NewServeMux()
 
+	// Serve static files from the "static" directory
+	fs := http.FileServer(http.Dir("static"))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	// Serve main.html at the root endpoint
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/main.html")
+	})
+
 	mux.HandleFunc("/variables", func(w http.ResponseWriter, r *http.Request) {
 		handleVariablesEndpoint(client, w, r)
 	})
