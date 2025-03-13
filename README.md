@@ -2,7 +2,7 @@
 
 A GUI application built with Qt/C++ that parses complex mathematical equations, generates parse trees, and visualizes graphs with customizable bounds. Ideal for educational purposes and mathematical exploration.
 
-![Demo](screenshots/demo.png) *Show interface with equation, parse tree, and graph side-by-side*
+
 
 ## Features
 
